@@ -21,39 +21,43 @@ is
 
    type Buffer (Capacity : Capacity_Type) is record
       Memory : Element_Array (1 .. Capacity);
-      Read   : Natural;
-      Write  : Natural;
+      Read   : Natural; --  mod 2*C
+      Write  : Natural; --  mod 2*C
    end record;
 
+   --  2*C should not overflow, and neither should adding a read/write index to it.
    function Capacity_Is_Not_Too_Large (C : Capacity_Type) return Boolean
-     with Ghost,
-          Post => Capacity_Is_Not_Too_Large'Result
-                  = (C - 1 <= Natural'Last - C);
+     with Post => Capacity_Is_Not_Too_Large'Result
+                  = (C <= Natural'Last - C                        --  2*C should not overflow, and
+                     and then 2 * C - 1 <= Natural'Last - 2 * C); --  you can add indices to it
 
    function Is_Valid (B : Buffer) return Boolean
-     with Post => Is_Valid'Result =
-                    (B.Read < B.Capacity
-                     and then B.Write < B.Capacity
-                     and then Capacity_Is_Not_Too_Large (B.Capacity));
+     with Pre => Capacity_Is_Not_Too_Large (B.Capacity),
+          Post => Is_Valid'Result =
+                    (B.Read < B.Capacity + B.Capacity
+                     and then B.Write < B.Capacity + B.Capacity
+                     and then Length (B) <= B.Capacity);
 
    subtype Valid_Buffer is Buffer
-     with Dynamic_Predicate => Is_Valid (Valid_Buffer);
+     with Dynamic_Predicate => Capacity_Is_Not_Too_Large (Valid_Buffer.Capacity)
+                               and then Is_Valid (Valid_Buffer);
 
    function Buffer_Init (Capacity : Capacity_Type) return Valid_Buffer
      with Pre => Capacity_Is_Not_Too_Large (Capacity),
           Post => Buffer_Init'Result.Capacity = Capacity
                   and then Is_Empty (Buffer_Init'Result);
 
-   --  Translating indices
-
    function Mask (B : Valid_Buffer; I : Natural) return Positive
      with Post => Mask'Result <= B.Capacity and Mask'Result = 1 + I mod B.Capacity;
 
-   --  Buffer operations
-
-   function Length (B : Valid_Buffer) return Natural
-   with Post => Length'Result in 0 .. B.Capacity
-     and then To_Big_Integer (Length'Result) = (To_Big_Integer (B.Write) - To_Big_Integer (B.Read)) mod To_Big_Integer (B.Capacity);
+   --  NOTE: The buffer need not be valid, so the length might exceed
+   --  the capacity. But if it is, the length is further constrained
+   --  (see definition for Is_Valid).
+   function Length (B : Buffer) return Natural
+   with Pre => Capacity_Is_Not_Too_Large (B.Capacity),
+        Post => Length'Result in 0 .. 2 * B.Capacity
+                and then To_Big_Integer (Length'Result)
+                       = (To_Big_Integer (B.Write) - To_Big_Integer (B.Read)) mod To_Big_Integer (2 * B.Capacity);
 
    function Is_Empty (B : Valid_Buffer) return Boolean
    with Post => Is_Empty'Result = (B.Read = B.Write)

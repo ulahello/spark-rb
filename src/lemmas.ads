@@ -50,4 +50,10 @@ package Lemmas with SPARK_Mode => On is
           Post => (if A mod M = B mod M
                    then (A + K) mod M = (B + K) mod M);
 
+   procedure Lemma_Mod_Scale_Compat (A, B, K, M : Big_Integer)
+     with Ghost,
+          Pre => M /= 0,
+          Post => (if A mod M = B mod M
+                   then (A * K) mod M = (B * K) mod M);
+
 end Lemmas;

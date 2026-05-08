@@ -9,12 +9,14 @@ with Lemmas;
 package body Ring_Buffer with SPARK_Mode => On is
 
    function Is_Valid (B : Buffer) return Boolean
-   is (B.Read < B.Capacity
-       and then B.Write < B.Capacity
-       and then B.Capacity - 1 <= Natural'Last - B.Capacity);
+   is (Capacity_Is_Not_Too_Large (B.Capacity)
+     and then B.Read < B.Capacity + B.Capacity
+     and then B.Write < B.Capacity + B.Capacity
+     and then Length (B) <= B.Capacity);
 
    function Capacity_Is_Not_Too_Large (C : Capacity_Type) return Boolean
-   is (C - 1 <= Natural'Last - C);
+   is (C <= Natural'Last - C
+     and then 2 * C - 1 <= Natural'Last - 2 * C);
 
    function Buffer_Init (Capacity : Capacity_Type) return Valid_Buffer is
       Buffer_Empty : constant Buffer :=
@@ -29,14 +31,31 @@ package body Ring_Buffer with SPARK_Mode => On is
    function Mask (B : Valid_Buffer; I : Natural) return Positive
    is (1 + I mod B.Capacity);
 
-   function Length (B : Valid_Buffer) return Natural
+   function Length (B : Buffer) return Natural
    is
-      R : constant Big_Integer := To_Big_Integer (B.Read);
-      W : constant Big_Integer := To_Big_Integer (B.Write);
+      Read : constant Integer := B.Read mod (2 * B.Capacity);
+      Write : constant Integer := B.Write mod (2 * B.Capacity);
+      Rs : constant Big_Integer := To_Big_Integer (B.Read);
+      Ws : constant Big_Integer := To_Big_Integer (B.Write);
+      R : constant Big_Integer := To_Big_Integer (Read);
+      W : constant Big_Integer := To_Big_Integer (Write);
       C : constant Big_Integer := To_Big_Integer (B.Capacity);
    begin
-      Lemma_Mod_Trans_Compat (To_Big_Integer (0), C, W - R, C);
-      return ((B.Capacity + B.Write) - B.Read) mod B.Capacity;
+      --  Note that our buffer isn't known to be valid, but we want to
+      --  be working with read and write indices mod 2C, so we must
+      --  show that this is equivalent.
+      Lemma_Mod_Idempotent (Rs, 2 * C);
+      Lemma_Mod_Idempotent (Ws, 2 * C);
+      --  With unbounded indices W*, R*, and W, R both defined mod 2C,
+      --  we show W* - R* ≡ W - R mod 2C.
+      --  (First, W* - R* ≡ W - R* mod 2C)
+      Lemma_Mod_Trans_Compat (Ws, W, -Rs, 2*C);
+      --  (Next, W - R* ≡ W - R mod 2C)
+      Lemma_Mod_Trans_Compat (-Rs, -R, W, 2*C);
+      Lemma_Mod_Scale_Compat (Rs, R, -1, 2*C);
+      --  Computing length, we add 2C to avoid overflow.
+      Lemma_Mod_Trans_Compat (To_Big_Integer (0), 2 * C, W - R, 2 * C);
+      return ((2 * B.Capacity + Write) - Read) mod (2 * B.Capacity);
    end Length;
 
    function Is_Empty (B : Valid_Buffer) return Boolean is
@@ -49,12 +68,12 @@ package body Ring_Buffer with SPARK_Mode => On is
       pragma Assert (if B.Read = B.Write then Length (B) = 0);
 
       --  The other requires some modular arithmetic lemmas. By
-      --  assumption, our length N ≡ W - R mod C. When N is zero, we
-      --  have 0 ≡ W - R mod C, so W ≡ R mod C.
-      Lemma_Mod_Trans_Compat (N, W - R, R, C);
-      --  Since both 0 <= W, R < C, mod does nothing and W = R.
-      Lemma_Mod_Nop (R, C);
-      Lemma_Mod_Nop (W, C);
+      --  assumption, our length N ≡ W - R mod 2C. When N is zero, we
+      --  have 0 ≡ W - R mod 2C, so W ≡ R mod 2C.
+      Lemma_Mod_Trans_Compat (N, W - R, R, 2*C);
+      --  Since both 0 <= W, R < 2C, mod does nothing and W = R.
+      Lemma_Mod_Nop (R, 2*C);
+      Lemma_Mod_Nop (W, 2*C);
 
       return B.Read = B.Write;
    end Is_Empty;
