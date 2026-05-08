@@ -68,9 +68,35 @@ package body Ring_Buffer with SPARK_Mode => On is
    end Get;
 
    procedure Push (B : in out Valid_Buffer; V : Element) is
+      N : constant Big_Integer := To_Big_Integer (Length (B));
+      Np : Big_Integer;
+      R : constant Big_Integer := To_Big_Integer (B.Read);
+      W : constant Big_Integer := To_Big_Integer (B.Write);
+      C : constant Big_Integer := To_Big_Integer (B.Capacity);
    begin
+
+      --  FIXME: while writing this realized there's an error with how
+      --  i'm defining capacity, the buffer can never be full because
+      --  length is mod C. also this is incomplete.
+
+      pragma Assert (N < C);
+      pragma Assert (N = (W - R) mod C);
+
       B.Memory (Mask (B, B.Write)) := V;
       B.Write := (B.Write + 1) mod B.Capacity;
+
+      Np := To_Big_Integer (Length (B));
+      pragma Assert (Np = ((W + 1) mod C - R) mod C);
+      Lemma_Mod_Sum_Simp (-R, W + 1, C);
+      pragma Assert (Np = (W - R + 1) mod C);
+      Lemma_Mod_Trans_Compat (Np, W - R + 1, -1, C);
+      Lemma_Mod_Nop (N, C);
+      Lemma_Mod_Nop (Np, C);
+      pragma Assert ((Np - 1) mod C = (W - R) mod C);
+      pragma Assert (N mod C = (Np - 1) mod C);
+      Lemma_Mod_Trans_Compat (N, Np - 1, 1, C);
+      pragma Assert ((N + 1) mod C = Np mod C);
+      Lemma_Mod_Nop (N + 1, C);
    end Push;
 
    procedure Pop (B : in out Valid_Buffer; V : out Element) is
