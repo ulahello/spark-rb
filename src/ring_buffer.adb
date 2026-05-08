@@ -84,4 +84,11 @@ package body Ring_Buffer with SPARK_Mode => On is
       B.Write := B.Read;
    end Clear;
 
+   procedure Truncate_Back (B : in out Valid_Buffer; To_Length : Natural) is
+   begin
+      if To_Length < Length (B) then
+         B.Read := (B.Write - To_Length) mod B.Capacity;
+      end if;
+   end Truncate_Back;
+
 end Ring_Buffer;

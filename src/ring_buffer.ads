@@ -83,6 +83,10 @@ is
    procedure Clear (B : in out Valid_Buffer)
    with Post => Is_Empty (B);
 
-   --  procedure Truncate_Back (B : in out Valid_Buffer; Length : Natural);
+   procedure Truncate_Back (B : in out Valid_Buffer; To_Length : Natural)
+     with Post => Length (B) = Natural'Min (To_Length, Length (B'Old))
+                  and then (for all I in 0 .. Length (B)
+                             => Get (B'Old, I + Length (B) - Length (B'Old))
+                                = Get (B, I));
 
 end Ring_Buffer;
