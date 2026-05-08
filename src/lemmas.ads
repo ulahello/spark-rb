@@ -6,6 +6,8 @@ use type Ada.Numerics.Big_Numbers.Big_Integers.Big_Integer;
 
 package Lemmas with SPARK_Mode => On is
 
+   --  Ring buffer capacity is a power of two, we formally define this.
+
    function Is_Power_Of_Two (N : Natural) return Boolean
      with Post => Is_Power_Of_Two'Result =
                   (case N is
@@ -23,6 +25,9 @@ package Lemmas with SPARK_Mode => On is
                                  Decreases => N);
 
    --  TODO: Lemma_Power2_Implies_Exp2
+
+   --  Useful properties of modular arithmetic. See
+   --  https://en.wikipedia.org/wiki/Modular_arithmetic#Basic_properties.
 
    procedure Lemma_Mod_Idempotent (N, M : Big_Integer)
      with Ghost,

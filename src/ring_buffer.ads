@@ -66,8 +66,19 @@ is
    with Pre => I <= Length (B),
         Post => Get'Result = B.Memory (Mask (B, B.Read + I));
 
-   --  procedure Push (B : in out Valid_Buffer; V : Element);
-   --  procedure Pop (B : in out Valid_Buffer; V : out Element);
+   procedure Push (B : in out Valid_Buffer; V : Element)
+     with Pre => not Is_Full (B),
+          Post => Length (B'Old) + 1 = Length (B)
+                  and then (for all I in 0 .. Length (B'Old) - 1
+                             => Get (B'Old, I) = Get (B, I))
+                  and then Get (B, Length (B'Old)) = V;
+
+   procedure Pop (B : in out Valid_Buffer; V : out Element)
+     with Pre => not Is_Empty (B),
+          Post => Length (B) + 1 = Length (B'Old)
+                  and then (for all I in 1 .. Length (B)
+                             => Get (B'Old, I) = Get (B, I - 1))
+                  and then Get (B'Old, 0) = V;
 
    procedure Clear (B : in out Valid_Buffer)
    with Post => Is_Empty (B);

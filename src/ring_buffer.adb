@@ -67,6 +67,18 @@ package body Ring_Buffer with SPARK_Mode => On is
       return B.Memory (Mask (B, B.Read + I));
    end Get;
 
+   procedure Push (B : in out Valid_Buffer; V : Element) is
+   begin
+      B.Memory (Mask (B, B.Write)) := V;
+      B.Write := (B.Write + 1) mod B.Capacity;
+   end Push;
+
+   procedure Pop (B : in out Valid_Buffer; V : out Element) is
+   begin
+      V := B.Memory (Mask (B, B.Read));
+      B.Read := (B.Read + 1) mod B.Capacity;
+   end Pop;
+
    procedure Clear (B : in out Valid_Buffer) is
    begin
       B.Write := B.Read;
