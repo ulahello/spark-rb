@@ -1,0 +1,11 @@
+name = "spark_rb"
+description = "Ring buffer in SPARK"
+version = "0.1.0-dev"
+
+authors = ["Ula Shipman"]
+maintainers = ["Ula Shipman <ula.hello@mailbox.org>"]
+maintainers-logins = ["ulahello"]
+licenses = "MPL-2.0"
+website = "https://github.com/ulahello/spark-rb"
+tags = ["spark", "buffer"]
+

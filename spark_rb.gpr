@@ -1,0 +1,29 @@
+with "config/spark_rb_config.gpr";
+project Spark_Rb is
+
+   for Library_Name use "Spark_Rb";
+   for Library_Version use Project'Library_Name & ".so." & Spark_Rb_Config.Crate_Version;
+
+   for Source_Dirs use ("src/", "config/");
+   for Object_Dir use "obj/" & Spark_Rb_Config.Build_Profile;
+   for Create_Missing_Dirs use "True";
+   for Library_Dir use "lib";
+
+   type Library_Type_Type is ("relocatable", "static", "static-pic");
+   Library_Type : Library_Type_Type :=
+     external ("SPARK_RB_LIBRARY_TYPE", external ("LIBRARY_TYPE", "static"));
+   for Library_Kind use Library_Type;
+
+   package Compiler is
+      for Default_Switches ("Ada") use Spark_Rb_Config.Ada_Compiler_Switches;
+   end Compiler;
+
+   package Binder is
+      for Switches ("Ada") use ("-Es"); --  Symbolic traceback
+   end Binder;
+
+   package Install is
+      for Artifacts (".") use ("share");
+   end Install;
+
+end Spark_Rb;
