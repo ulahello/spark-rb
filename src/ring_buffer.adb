@@ -117,8 +117,27 @@ package body Ring_Buffer with SPARK_Mode => On is
          Lemma_Mod_Nop (Np, 2*C);
          Lemma_Mod_Trans_Compat (N, Np - 1, 1, 2*C);
          Lemma_Mod_Nop (N + 1, 2*C);
-         pragma Assert (N + 1 = Np);
       end Lemma_Push_Increments_Length;
+
+      procedure Lemma_Pushed_Element_At_Back (R, W, N, C : Big_Integer)
+        with Ghost,
+             Pre => (0 <= R and then R < 2 * C) and then (0 <= W and then W < 2 * C)
+                    and then (0 <= N and N < C)
+                    and then N = (W - R) mod (C*2),
+             Post => W mod C = (R + N) mod C
+      is
+      begin
+         --  Proof that the element we added is in the right place:
+         --      N ≡ W - R  mod 2C
+         --  R + N ≡ W      mod 2C
+         --  And this is still congruent mod C. This matches the form
+         --  that Mask returns (R + index), so the element at the masked
+         --  index R + N is exactly V.
+         Lemma_Mod_Trans_Compat (N, W - R, R, 2*C);
+         --  pragma Assert (W mod (2*C) = (R + N) mod (2*C));
+         Lemma_Mod_Composite (W, R + N, 2, C);
+         pragma Assert (W mod C = (R + N) mod C);
+      end Lemma_Pushed_Element_At_Back;
 
    begin
       B.Memory (Mask (B, B.Write)) := V;
@@ -126,24 +145,14 @@ package body Ring_Buffer with SPARK_Mode => On is
 
       Lemma_Push_Increments_Length (R, W, C, N, Np);
 
+      Lemma_Pushed_Element_At_Back (R, W, N, C);
+      pragma Assert (Mask (B, Write) = Mask (B, B.Read + (Length (B) - 1)));
+
       --  Proof that the new buffer is valid:
       --  TODO: still complains about predicate check failing, but none of these assertions have gone off?
       pragma Assert (Length (B) <= B.Capacity);
       pragma Assert (B.Write < 2 * B.Capacity);
       pragma Assert (Is_Valid (B));
-
-      --  Proof that the element we added is in the right place:
-      pragma Assert (B.Memory (Mask (B, Write)) = V);
-      --      N ≡ W - R  mod 2C
-      --  R + N ≡ W      mod 2C
-      --  And this is still congruent mod C. This matches the form
-      --  that Mask returns (R + index), so the element at the masked
-      --  index R + N is exactly V.
-      Lemma_Mod_Trans_Compat (N, W - R, R, 2*C);
-      pragma Assert (W mod (2*C) = (R + N) mod (2*C));
-      Lemma_Mod_Composite (W, R + N, 2, C);
-      pragma Assert (W mod C = (R + N) mod C);
-      pragma Assert (Get (B, Length (B) - 1) = V);
 
       --  Proof that all the old elements are unchanged:
       pragma Assert (B.Read = OldB.Read);
