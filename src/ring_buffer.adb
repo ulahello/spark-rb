@@ -93,6 +93,7 @@ package body Ring_Buffer with SPARK_Mode => On is
       C : constant Big_Integer := To_Big_Integer (B.Capacity);
       Write : constant Natural := B.Write;
       Np : Big_Integer;
+      OldB : constant Valid_Buffer := B;
    begin
 
       pragma Assert (N < C);
@@ -138,6 +139,22 @@ package body Ring_Buffer with SPARK_Mode => On is
       pragma Assert (Get (B, Length (B) - 1) = V);
 
       --  Proof that all the old elements are unchanged:
+      pragma Assert (B.Read = OldB.Read);
+      for I in 0 .. Length (OldB) - 1 loop
+         --  No index overlaps with where V is.
+         pragma Assert (B.Read + I /= B.Read + Length (OldB));
+         --  TODO: why is this true mod C?
+         pragma Assert (Mask (B, B.Read + I) /= Mask (B, B.Read + Length (OldB)));
+
+         --  Read index is unchanged, and we haven't written to this
+         --  place, so the elements are unchanged.
+         pragma Assert (Mask (B, B.Read + I) = Mask (OldB, OldB.Read + I));
+         pragma Assert (B.Memory (Mask (B, B.Read + I)) = OldB.Memory (Mask (OldB, OldB.Read + I)));
+         pragma Assert (Get (B, I) = Get (OldB, I));
+
+         --  Induct over this.
+         pragma Loop_Invariant ((for all K in 0 .. I => Get (OldB, K) = Get (B, K)));
+      end loop;
       --  TODO
 
    end Push;
