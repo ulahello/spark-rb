@@ -104,7 +104,6 @@ package body Ring_Buffer with SPARK_Mode => On is
              Post => N + 1 = Np
       is
       begin
-         --  Proof that the length increments:
          --  By definition,
          --  N' ≡ ((1 + W) mod 2C - R) mod 2C
          --     ≡ (1 + W - R)          mod 2C,
@@ -122,12 +121,12 @@ package body Ring_Buffer with SPARK_Mode => On is
       procedure Lemma_Pushed_Element_At_Back (R, W, N, C : Big_Integer)
         with Ghost,
              Pre => (0 <= R and then R < 2 * C) and then (0 <= W and then W < 2 * C)
-                    and then (0 <= N and N < C)
+                    and then (0 <= N and then N < C)
                     and then N = (W - R) mod (C*2),
              Post => W mod C = (R + N) mod C
       is
       begin
-         --  Proof that the element we added is in the right place:
+         --  We know
          --      N ≡ W - R  mod 2C
          --  R + N ≡ W      mod 2C
          --  And this is still congruent mod C. This matches the form
@@ -139,46 +138,59 @@ package body Ring_Buffer with SPARK_Mode => On is
          pragma Assert (W mod C = (R + N) mod C);
       end Lemma_Pushed_Element_At_Back;
 
+      procedure Lemma_Front_Distinct_From_Pushed (R, W, N, C, I : Big_Integer)
+        with Ghost,
+             Pre => (0 <= R and then R < 2 * C) and then (0 <= W and then W < 2 * C)
+                    and then (0 <= N and then N < C)
+                    and then N = (W - R) mod (C*2)
+                    and then (0 <= I and then I < N),
+             Post => (R + I) mod C /= (R + N) mod C
+      is
+      begin
+         --  Since R + I /= R + N, and both sides are bounded by 3C,
+         --  we can say R + I /≡ R + N mod 3C.
+         pragma Assert (R + I < R + N);
+         Lemma_Mod_Nop (R + I, 3*C);
+         Lemma_Mod_Nop (R + N, 3*C);
+         pragma Assert ((R + I) mod (3*C) /= (R + N) mod (3*C));
+         Lemma_Mod_Trans_Compat (R + I, R + N, -R, 3*C);
+         pragma Assert (I mod (3*C) /= N mod (3*C));
+         --  TODO: why is it true mod C? SPARK kind of just believes me.
+      end Lemma_Front_Distinct_From_Pushed;
+
    begin
       B.Memory (Mask (B, B.Write)) := V;
       B.Write := (B.Write + 1) mod (2 * B.Capacity);
 
+      --  Proof that the length increments:
       Lemma_Push_Increments_Length (R, W, C, N, Np);
 
+      --  Proof that the element we added is in the right place:
       Lemma_Pushed_Element_At_Back (R, W, N, C);
       pragma Assert (Mask (B, Write) = Mask (B, B.Read + (Length (B) - 1)));
-
-      --  Proof that the new buffer is valid:
-      --  TODO: still complains about predicate check failing, but none of these assertions have gone off?
-      pragma Assert (Length (B) <= B.Capacity);
-      pragma Assert (B.Write < 2 * B.Capacity);
-      pragma Assert (Is_Valid (B));
 
       --  Proof that all the old elements are unchanged:
       pragma Assert (B.Read = OldB.Read);
       for I in 0 .. Length (OldB) - 1 loop
          --  No index overlaps with where V is.
          pragma Assert (B.Read + I /= B.Read + Length (OldB));
-         --  We can bound R+I by 3C, thus it is true mod 3C.
-         --  TODO: why is it true mod C?
-         Lemma_Mod_Nop (R + To_Big_Integer (I), 3*C);
-         Lemma_Mod_Nop (R + N, 3*C);
-         pragma Assert ((B.Read + I) mod (3*B.Capacity) /= (B.Read + Length (OldB)) mod (3*B.Capacity));
-         Lemma_Mod_Trans_Compat (R + To_Big_Integer (I), R + N, -R, 3*C);
-         pragma Assert ((R - R + To_Big_Integer (I)) mod (3*C) /= (R - R + N) mod (3*C));
-         pragma Assert (I mod (3*B.Capacity) /= Length (OldB) mod (3*B.Capacity));
+         Lemma_Front_Distinct_From_Pushed (R, W, N, C, To_Big_Integer (I));
          pragma Assert (Mask (B, B.Read + I) /= Mask (B, B.Read + Length (OldB)));
 
          --  Read index is unchanged, and we haven't written to this
          --  place, so the elements are unchanged.
          pragma Assert (Mask (B, B.Read + I) = Mask (OldB, OldB.Read + I));
-         pragma Assert (B.Memory (Mask (B, B.Read + I)) = OldB.Memory (Mask (OldB, OldB.Read + I)));
          pragma Assert (Get (B, I) = Get (OldB, I));
 
          --  Induct over this.
          pragma Loop_Invariant ((for all K in 0 .. I => Get (OldB, K) = Get (B, K)));
       end loop;
-      --  TODO
+
+      --  Proof that the new buffer is valid:
+      --  TODO: still complains about predicate check failing, but none of these assertions have gone off?
+      pragma Assert (Length (B) <= B.Capacity);
+      pragma Assert (B.Write < 2 * B.Capacity);
+      pragma Assert (Is_Valid (B));
 
    end Push;
 
