@@ -94,28 +94,29 @@ package body Ring_Buffer with SPARK_Mode => On is
       C : constant Big_Integer := To_Big_Integer (B.Capacity);
    begin
 
-      --  FIXME: while writing this realized there's an error with how
-      --  i'm defining capacity, the buffer can never be full because
-      --  length is mod C. also this is incomplete.
-
       pragma Assert (N < C);
-      pragma Assert (N = (W - R) mod C);
+      pragma Assert (N = (W - R) mod (2*C));
 
       B.Memory (Mask (B, B.Write)) := V;
-      B.Write := (B.Write + 1) mod B.Capacity;
+      B.Write := (B.Write + 1) mod (2 * B.Capacity);
 
+      --  By definition,
+      --  N' ≡ ((1 + W) mod 2C - R) mod 2C
+      --     ≡ (1 + W - R)          mod 2C,
+      --  Since N' - 1 ≡ W - R ≡ N mod 2C, then N + 1 ≡ N' mod 2C,
+      --  and with lengths bounded less than C, exactly N + 1 = N'.
       Np := To_Big_Integer (Length (B));
-      pragma Assert (Np = ((W + 1) mod C - R) mod C);
-      Lemma_Mod_Sum_Simp (-R, W + 1, C);
-      pragma Assert (Np = (W - R + 1) mod C);
-      Lemma_Mod_Trans_Compat (Np, W - R + 1, -1, C);
-      Lemma_Mod_Nop (N, C);
-      Lemma_Mod_Nop (Np, C);
-      pragma Assert ((Np - 1) mod C = (W - R) mod C);
-      pragma Assert (N mod C = (Np - 1) mod C);
-      Lemma_Mod_Trans_Compat (N, Np - 1, 1, C);
-      pragma Assert ((N + 1) mod C = Np mod C);
-      Lemma_Mod_Nop (N + 1, C);
+      pragma Assert (Np = ((W + 1) mod (2*C) - R) mod (2*C));
+      Lemma_Mod_Sum_Simp (-R, W + 1, 2*C);
+      pragma Assert (Np = (W - R + 1) mod (2*C));
+      Lemma_Mod_Trans_Compat (Np, W - R + 1, -1, 2*C);
+      Lemma_Mod_Nop (N, 2*C);
+      Lemma_Mod_Nop (Np, 2*C);
+      Lemma_Mod_Trans_Compat (N, Np - 1, 1, 2*C);
+      Lemma_Mod_Nop (N + 1, 2*C);
+      pragma Assert (N + 1 = Np);
+
+      --  TODO: prove forall values
    end Push;
 
    procedure Pop (B : in out Valid_Buffer; V : out Element) is
