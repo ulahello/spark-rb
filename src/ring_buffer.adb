@@ -99,14 +99,12 @@ package body Ring_Buffer with SPARK_Mode => On is
          --  By definition,
          --  N' ≡ ((1 + W) mod 2C - R) mod 2C
          --     ≡ (1 + W - R)          mod 2C,
-         --  Since N' - 1 ≡ W - R ≡ N mod 2C, then N + 1 ≡ N' mod 2C,
-         --  and with lengths bounded less than C, exactly N + 1 = N'.
+         --  Substituting W - R, we get that N' ≡ N + 1 mod 2C, and
+         --  with lengths bounded less than C, that they are equal.
          Lemma_Mod_Sum_Simp (-R, W + 1, 2*C);
          Lemma_Mod_Trans_Compat (Np, W - R + 1, -1, 2*C);
-         Lemma_Mod_Nop (N, 2*C);
-         Lemma_Mod_Nop (Np, 2*C);
-         Lemma_Mod_Trans_Compat (N, Np - 1, 1, 2*C);
          Lemma_Mod_Nop (N + 1, 2*C);
+         Lemma_Mod_Nop (Np, 2*C);
       end Lemma_Push_Increments_Length;
 
       procedure Lemma_Pushed_Element_At_Back (R, W, N, C : Big_Integer)
