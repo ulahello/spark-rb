@@ -87,7 +87,6 @@ package body Ring_Buffer with SPARK_Mode => On is
    end Get;
 
    procedure Push (B : in out Valid_Buffer; V : Element) is
-
       procedure Lemma_Push_Increments_Length (R, W, C, N, Np : Big_Integer)
         with Ghost,
              Pre => (0 <= R and then R < 2 * C) and then (0 <= W and then W < 2 * C)
@@ -103,7 +102,6 @@ package body Ring_Buffer with SPARK_Mode => On is
          --  Since N' - 1 ≡ W - R ≡ N mod 2C, then N + 1 ≡ N' mod 2C,
          --  and with lengths bounded less than C, exactly N + 1 = N'.
          Lemma_Mod_Sum_Simp (-R, W + 1, 2*C);
-         pragma Assert (Np = (W - R + 1) mod (2*C));
          Lemma_Mod_Trans_Compat (Np, W - R + 1, -1, 2*C);
          Lemma_Mod_Nop (N, 2*C);
          Lemma_Mod_Nop (Np, 2*C);
@@ -187,9 +185,40 @@ package body Ring_Buffer with SPARK_Mode => On is
    end Push;
 
    procedure Pop (B : in out Valid_Buffer; V : out Element) is
+      procedure Lemma_Pop_Decrements_Length (R, W, C, N, Np : Big_Integer)
+        with Ghost,
+             Pre => (0 <= R and then R < 2 * C) and then (0 <= W and then W < 2 * C)
+                    and then (0 < N and N <= C)
+                    and then N = (W - R) mod (C*2)
+                    and then Np = (W - (R + 1) mod (2*C)) mod (2*C),
+             Post => N = Np + 1
+      is
+      begin
+         --  N' ≡ (W - (R + 1) mod 2C) mod 2C
+         --     ≡  W - R - 1           mod 2C,
+         --  Then N' + 1 ≡ W - R ≡ N mod 2C, so with lengths bounded
+         --  less than C, exactly N = N' + 1.
+         Lemma_Mod_Sum_Simp (-R - 1, W, 2*C);
+         Lemma_Mod_Trans_Compat (Np, W - R - 1, 1, 2*C);
+         Lemma_Mod_Nop (N, 2*C);
+         Lemma_Mod_Nop (Np + 1, 2*C);
+      end Lemma_Pop_Decrements_Length;
+
+      R : constant Big_Integer := To_Big_Integer (B.Read);
+      W : constant Big_Integer := To_Big_Integer (B.Write);
+      C : constant Big_Integer := To_Big_Integer (B.Capacity);
+      N : constant Big_Integer := To_Big_Integer (Length (B));
+      Np : constant Big_Integer := (W - (R + 1) mod (2*C)) mod (2*C);
+      Read : constant Natural := B.Read;
+
    begin
+
       V := B.Memory (Mask (B, B.Read));
-      B.Read := (B.Read + 1) mod B.Capacity;
+      B.Read := (B.Read + 1) mod (2 * B.Capacity);
+
+      --  Proof that the length decrements:
+      Lemma_Pop_Decrements_Length (R, W, C, N, Np);
+
    end Pop;
 
    procedure Clear (B : in out Valid_Buffer) is
