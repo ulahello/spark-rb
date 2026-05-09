@@ -24,8 +24,7 @@ package body Lemmas with SPARK_Mode => On is
    procedure Lemma_Mod_Sum_Simp (A, B, M : Big_Integer) is
    begin
       Lemma_Mod_Idempotent (B, M);
-      --  pragma Assert ((A mod M) + (B mod M) = (A + B) mod M);
-      pragma Assume ((A + B mod M) mod M = (A + B) mod M, "sorry");
+      Lemma_Mod_Trans_Compat (B, B mod M, A, M);
    end Lemma_Mod_Sum_Simp;
 
    procedure Lemma_Mod_Nop (N, M : Big_Integer) is null;
