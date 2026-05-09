@@ -55,7 +55,7 @@ is
    --  (see definition for Is_Valid).
    function Length (B : Buffer) return Natural
    with Pre => Capacity_Is_Not_Too_Large (B.Capacity),
-        Post => Length'Result in 0 .. 2 * B.Capacity
+        Post => Length'Result < 2 * B.Capacity
                 and then To_Big_Integer (Length'Result)
                        = (To_Big_Integer (B.Write) - To_Big_Integer (B.Read)) mod To_Big_Integer (2 * B.Capacity);
 
