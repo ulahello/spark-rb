@@ -34,8 +34,8 @@ is
    function Is_Valid (B : Buffer) return Boolean
      with Pre => Capacity_Is_Not_Too_Large (B.Capacity),
           Post => Is_Valid'Result =
-                    (B.Read < B.Capacity + B.Capacity
-                     and then B.Write < B.Capacity + B.Capacity
+                    (B.Read < 2 * B.Capacity
+                     and then B.Write < 2 * B.Capacity
                      and then Length (B) <= B.Capacity);
 
    subtype Valid_Buffer is Buffer

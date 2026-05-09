@@ -88,10 +88,11 @@ package body Ring_Buffer with SPARK_Mode => On is
 
    procedure Push (B : in out Valid_Buffer; V : Element) is
       N : constant Big_Integer := To_Big_Integer (Length (B));
-      Np : Big_Integer;
       R : constant Big_Integer := To_Big_Integer (B.Read);
       W : constant Big_Integer := To_Big_Integer (B.Write);
       C : constant Big_Integer := To_Big_Integer (B.Capacity);
+      Write : constant Natural := B.Write;
+      Np : Big_Integer;
    begin
 
       pragma Assert (N < C);
@@ -100,6 +101,7 @@ package body Ring_Buffer with SPARK_Mode => On is
       B.Memory (Mask (B, B.Write)) := V;
       B.Write := (B.Write + 1) mod (2 * B.Capacity);
 
+      --  Proof that the length increments:
       --  By definition,
       --  N' ≡ ((1 + W) mod 2C - R) mod 2C
       --     ≡ (1 + W - R)          mod 2C,
@@ -116,7 +118,28 @@ package body Ring_Buffer with SPARK_Mode => On is
       Lemma_Mod_Nop (N + 1, 2*C);
       pragma Assert (N + 1 = Np);
 
-      --  TODO: prove forall values
+      --  Proof that the new buffer is valid:
+      --  TODO: still complains about predicate check failing, but none of these assertions have gone off?
+      pragma Assert (Length (B) <= B.Capacity);
+      pragma Assert (B.Write < 2 * B.Capacity);
+      pragma Assert (Is_Valid (B));
+
+      --  Proof that the element we added is in the right place:
+      pragma Assert (B.Memory (Mask (B, Write)) = V);
+      --      N ≡ W - R  mod 2C
+      --  R + N ≡ W      mod 2C
+      --  And this is still congruent mod C. This matches the form
+      --  that Mask returns (R + index), so the element at the masked
+      --  index R + N is exactly V.
+      Lemma_Mod_Trans_Compat (N, W - R, R, 2*C);
+      pragma Assert (W mod (2*C) = (R + N) mod (2*C));
+      Lemma_Mod_Composite (W, R + N, 2, C);
+      pragma Assert (W mod C = (R + N) mod C);
+      pragma Assert (Get (B, Length (B) - 1) = V);
+
+      --  Proof that all the old elements are unchanged:
+      --  TODO
+
    end Push;
 
    procedure Pop (B : in out Valid_Buffer; V : out Element) is
