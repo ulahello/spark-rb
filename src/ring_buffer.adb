@@ -210,14 +210,20 @@ package body Ring_Buffer with SPARK_Mode => On is
       N : constant Big_Integer := To_Big_Integer (Length (B));
       Np : constant Big_Integer := (W - (R + 1) mod (2*C)) mod (2*C);
       Read : constant Natural := B.Read;
+      NewB : Buffer := B;
 
    begin
 
       V := B.Memory (Mask (B, B.Read));
-      B.Read := (B.Read + 1) mod (2 * B.Capacity);
+      NewB.Read := (B.Read + 1) mod (2 * B.Capacity);
 
       --  Proof that the length decrements:
       Lemma_Pop_Decrements_Length (R, W, C, N, Np);
+
+      --  Proof that the new buffer is valid:
+      pragma Assert (Is_Valid (NewB));
+      B := NewB;
+
 
    end Pop;
 
