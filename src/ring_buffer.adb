@@ -87,13 +87,6 @@ package body Ring_Buffer with SPARK_Mode => On is
    end Get;
 
    procedure Push (B : in out Valid_Buffer; V : Element) is
-      R : constant Big_Integer := To_Big_Integer (B.Read);
-      W : constant Big_Integer := To_Big_Integer (B.Write);
-      C : constant Big_Integer := To_Big_Integer (B.Capacity);
-      N : constant Big_Integer := To_Big_Integer (Length (B));
-      Np : constant Big_Integer := ((W + 1) mod (2*C) - R) mod (2*C);
-      Write : constant Natural := B.Write;
-      OldB : constant Valid_Buffer := B;
 
       procedure Lemma_Push_Increments_Length (R, W, C, N, Np : Big_Integer)
         with Ghost,
@@ -152,12 +145,26 @@ package body Ring_Buffer with SPARK_Mode => On is
          Lemma_Mod_Trans_Compat (I, N, R, C);
       end Lemma_Front_Distinct_From_Pushed;
 
+      R : constant Big_Integer := To_Big_Integer (B.Read);
+      W : constant Big_Integer := To_Big_Integer (B.Write);
+      C : constant Big_Integer := To_Big_Integer (B.Capacity);
+      N : constant Big_Integer := To_Big_Integer (Length (B));
+      Np : constant Big_Integer := ((W + 1) mod (2*C) - R) mod (2*C);
+      Write : constant Natural := B.Write;
+      OldB : constant Valid_Buffer := B;
+      NewB : Buffer := B;
+
    begin
-      B.Memory (Mask (B, B.Write)) := V;
-      B.Write := (B.Write + 1) mod (2 * B.Capacity);
+
+      NewB.Memory (Mask (B, B.Write)) := V;
+      NewB.Write := (B.Write + 1) mod (2 * B.Capacity);
 
       --  Proof that the length increments:
       Lemma_Push_Increments_Length (R, W, C, N, Np);
+
+      --  Proof that the new buffer is valid:
+      pragma Assert (Is_Valid (NewB));
+      B := NewB;
 
       --  Proof that the element we added is in the right place:
       Lemma_Pushed_Element_At_Back (R, W, N, C);
@@ -176,12 +183,6 @@ package body Ring_Buffer with SPARK_Mode => On is
          --  Induct over this.
          pragma Loop_Invariant ((for all K in 0 .. I => Get (OldB, K) = Get (B, K)));
       end loop;
-
-      --  Proof that the new buffer is valid:
-      --  TODO: still complains about predicate check failing, but none of these assertions have gone off?
-      pragma Assert (Length (B) <= B.Capacity);
-      pragma Assert (B.Write < 2 * B.Capacity);
-      pragma Assert (Is_Valid (B));
 
    end Push;
 
