@@ -52,15 +52,14 @@ package Lemmas with SPARK_Mode => On is
 
    procedure Lemma_Mod_Scale_Compat (A, B, K, M : Big_Integer)
      with Ghost,
-          Pre => M /= 0,
-          Post => (if A mod M = B mod M
-                   then (A * K) mod M = (B * K) mod M);
+          Pre => M /= 0 and then A mod M = B mod M,
+          Post => (A * K) mod M = (B * K) mod M;
 
    procedure Lemma_Mod_Composite (A, B, M, N : Big_Integer)
      with Ghost,
-          Pre => M /= 0 and then N /= 0,
-          Post => (if A mod (M*N) = B mod (M*N)
-                   then (A mod M = B mod M)
-                   and then (A mod N = B mod N));
+          Pre => M /= 0 and then N /= 0
+                 and then A mod (M*N) = B mod (M*N),
+          Post => (A mod M = B mod M)
+                   and then (A mod N = B mod N);
 
 end Lemmas;

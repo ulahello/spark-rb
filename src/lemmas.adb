@@ -36,14 +36,12 @@ package body Lemmas with SPARK_Mode => On is
 
    procedure Lemma_Mod_Scale_Compat (A, B, K, M : Big_Integer) is
    begin
-      pragma Assume ((if A mod M = B mod M then (A * K) mod M = (B * K) mod M), "sorry");
+      pragma Assume ((A * K) mod M = (B * K) mod M, "sorry");
    end Lemma_Mod_Scale_Compat;
 
    procedure Lemma_Mod_Composite (A, B, M, N : Big_Integer) is
    begin
-      pragma Assume ((if A mod (M*N) = B mod (M*N)
-                      then (A mod M = B mod M)
-                      and then (A mod N = B mod N)), "sorry");
+      pragma Assume ((A mod M = B mod M) and then (A mod N = B mod N), "sorry");
    end Lemma_Mod_Composite;
 
 end Lemmas;
