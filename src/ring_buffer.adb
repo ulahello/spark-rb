@@ -143,7 +143,14 @@ package body Ring_Buffer with SPARK_Mode => On is
       for I in 0 .. Length (OldB) - 1 loop
          --  No index overlaps with where V is.
          pragma Assert (B.Read + I /= B.Read + Length (OldB));
-         --  TODO: why is this true mod C?
+         --  We can bound R+I by 3C, thus it is true mod 3C.
+         --  TODO: why is it true mod C?
+         Lemma_Mod_Nop (R + To_Big_Integer (I), 3*C);
+         Lemma_Mod_Nop (R + N, 3*C);
+         pragma Assert ((B.Read + I) mod (3*B.Capacity) /= (B.Read + Length (OldB)) mod (3*B.Capacity));
+         Lemma_Mod_Trans_Compat (R + To_Big_Integer (I), R + N, -R, 3*C);
+         pragma Assert ((R - R + To_Big_Integer (I)) mod (3*C) /= (R - R + N) mod (3*C));
+         pragma Assert (I mod (3*B.Capacity) /= Length (OldB) mod (3*B.Capacity));
          pragma Assert (Mask (B, B.Read + I) /= Mask (B, B.Read + Length (OldB)));
 
          --  Read index is unchanged, and we haven't written to this
