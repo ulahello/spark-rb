@@ -147,15 +147,9 @@ package body Ring_Buffer with SPARK_Mode => On is
              Post => (R + I) mod C /= (R + N) mod C
       is
       begin
-         --  Since R + I /= R + N, and both sides are bounded by 3C,
-         --  we can say R + I /≡ R + N mod 3C.
-         pragma Assert (R + I < R + N);
-         Lemma_Mod_Nop (R + I, 3*C);
-         Lemma_Mod_Nop (R + N, 3*C);
-         pragma Assert ((R + I) mod (3*C) /= (R + N) mod (3*C));
-         Lemma_Mod_Trans_Compat (R + I, R + N, -R, 3*C);
-         pragma Assert (I mod (3*C) /= N mod (3*C));
-         --  TODO: why is it true mod C? SPARK kind of just believes me.
+         Lemma_Mod_Nop (I, C);
+         Lemma_Mod_Nop (N, C);
+         Lemma_Mod_Trans_Compat (I, N, R, C);
       end Lemma_Front_Distinct_From_Pushed;
 
    begin
@@ -170,16 +164,13 @@ package body Ring_Buffer with SPARK_Mode => On is
       pragma Assert (Mask (B, Write) = Mask (B, B.Read + (Length (B) - 1)));
 
       --  Proof that all the old elements are unchanged:
-      pragma Assert (B.Read = OldB.Read);
       for I in 0 .. Length (OldB) - 1 loop
          --  No index overlaps with where V is.
-         pragma Assert (B.Read + I /= B.Read + Length (OldB));
          Lemma_Front_Distinct_From_Pushed (R, W, N, C, To_Big_Integer (I));
          pragma Assert (Mask (B, B.Read + I) /= Mask (B, B.Read + Length (OldB)));
 
          --  Read index is unchanged, and we haven't written to this
          --  place, so the elements are unchanged.
-         pragma Assert (Mask (B, B.Read + I) = Mask (OldB, OldB.Read + I));
          pragma Assert (Get (B, I) = Get (OldB, I));
 
          --  Induct over this.
