@@ -208,6 +208,7 @@ package body Ring_Buffer with SPARK_Mode => On is
       N : constant Big_Integer := To_Big_Integer (Length (B));
       Np : constant Big_Integer := (W - (R + 1) mod (2*C)) mod (2*C);
       Read : constant Natural := B.Read;
+      OldB : constant Valid_Buffer := B;
       NewB : Buffer := B;
 
    begin
@@ -222,6 +223,18 @@ package body Ring_Buffer with SPARK_Mode => On is
       pragma Assert (Is_Valid (NewB));
       B := NewB;
 
+      --  Proof that pop leaves back elements unchanged:
+      for I in 1 .. Length (B) loop
+         Lemma_Mod_Sum_Simp (To_Big_Integer (I) - 1, R + 1, 2 * C);
+         pragma Assert ((R + To_Big_Integer (I)) mod (2*C) = ((R + 1) mod (2*C) + (To_Big_Integer (I) - 1)) mod (2*C));
+         Lemma_Mod_Composite (R + To_Big_Integer (I), (R + 1) mod (2*C) + To_Big_Integer (I) - 1, 2, C);
+         pragma Assert (((R + 1) mod (2*C) + (To_Big_Integer (I) - 1)) mod C = (R + To_Big_Integer (I)) mod C);
+         pragma Assert (Mask (B, B.Read + (I - 1)) = Mask (OldB, OldB.Read + I));
+         pragma Assert (Get (B, I - 1) = Get (OldB, I));
+
+         --  Induct on it.
+         pragma Loop_Invariant ((for all K in 1 .. I => Get (OldB, K) = Get (B, K - 1)));
+      end loop;
 
    end Pop;
 
