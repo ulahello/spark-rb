@@ -34,10 +34,15 @@ package Lemmas with SPARK_Mode => On is
           Pre => M /= 0,
           Post => (N mod M) = (N mod M) mod M;
 
-   procedure Lemma_Mod_Sum_Simp (A, B, M : Big_Integer)
+   procedure Lemma_Mod_Add_Simp (A, B, M : Big_Integer)
      with Ghost,
           Pre => M /= 0,
           Post => (A + B mod M) mod M = (A + B) mod M;
+
+   procedure Lemma_Mod_Mul_Simp (A, B, M : Big_Integer)
+     with Ghost,
+          Pre => M /= 0,
+          Post => (A * (B mod M)) mod M = (A * B) mod M;
 
    procedure Lemma_Mod_Nop (N, M : Big_Integer)
      with Ghost,
@@ -61,5 +66,23 @@ package Lemmas with SPARK_Mode => On is
                  and then A mod (M*N) = B mod (M*N),
           Post => (A mod M = B mod M)
                    and then (A mod N = B mod N);
+
+   --  Ring buffer specific
+
+   procedure Lemma_Push_Increases_Length (R, W, C, N, Np, dW : Big_Integer)
+     with Ghost,
+          Pre => (0 < C)
+                  and then (0 <= N + dW and then N + dW <= C)
+                  and then N = (W - R) mod (C*2)
+                  and then Np = ((W + dW) mod (2*C) - R) mod (2*C),
+          Post => N + dW = Np;
+
+   procedure Lemma_Pop_Decreases_Length (R, W, C, N, Np, dR : Big_Integer)
+     with Ghost,
+          Pre => (0 < C)
+                  and then (0 <= N - dR and then N - dR <= C)
+                  and then N = (W - R) mod (C*2)
+                  and then Np = (W - (R + dR) mod (2*C)) mod (2*C),
+          Post => N = Np + dR;
 
 end Lemmas;

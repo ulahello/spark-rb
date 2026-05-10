@@ -87,26 +87,6 @@ package body Ring_Buffer with SPARK_Mode => On is
    end Get;
 
    procedure Push (B : in out Valid_Buffer; V : Element) is
-      procedure Lemma_Push_Increments_Length (R, W, C, N, Np : Big_Integer)
-        with Ghost,
-             Pre => (0 <= R and then R < 2 * C) and then (0 <= W and then W < 2 * C)
-                    and then (0 <= N and N < C)
-                    and then N = (W - R) mod (C*2)
-                    and then Np = ((W + 1) mod (2*C) - R) mod (2*C),
-             Post => N + 1 = Np
-      is
-      begin
-         --  By definition,
-         --  N' ≡ ((1 + W) mod 2C - R) mod 2C
-         --     ≡ (1 + W - R)          mod 2C,
-         --  Substituting W - R, we get that N' ≡ N + 1 mod 2C, and
-         --  with lengths bounded less than C, that they are equal.
-         Lemma_Mod_Sum_Simp (-R, W + 1, 2*C);
-         Lemma_Mod_Trans_Compat (Np, W - R + 1, -1, 2*C);
-         Lemma_Mod_Nop (N + 1, 2*C);
-         Lemma_Mod_Nop (Np, 2*C);
-      end Lemma_Push_Increments_Length;
-
       procedure Lemma_Pushed_Element_At_Back (R, W, N, C : Big_Integer)
         with Ghost,
              Pre => (0 <= R and then R < 2 * C) and then (0 <= W and then W < 2 * C)
@@ -156,7 +136,7 @@ package body Ring_Buffer with SPARK_Mode => On is
       NewB.Write := (B.Write + 1) mod (2 * B.Capacity);
 
       --  Proof that the length increments:
-      Lemma_Push_Increments_Length (R, W, C, N, Np);
+      Lemma_Push_Increases_Length (R, W, C, N, Np, 1);
 
       --  Proof that the new buffer is valid:
       pragma Assert (Is_Valid (NewB));
@@ -183,25 +163,6 @@ package body Ring_Buffer with SPARK_Mode => On is
    end Push;
 
    procedure Pop (B : in out Valid_Buffer; V : out Element) is
-      procedure Lemma_Pop_Decrements_Length (R, W, C, N, Np : Big_Integer)
-        with Ghost,
-             Pre => (0 <= R and then R < 2 * C) and then (0 <= W and then W < 2 * C)
-                    and then (0 < N and N <= C)
-                    and then N = (W - R) mod (C*2)
-                    and then Np = (W - (R + 1) mod (2*C)) mod (2*C),
-             Post => N = Np + 1
-      is
-      begin
-         --  N' ≡ (W - (R + 1) mod 2C) mod 2C
-         --     ≡  W - R - 1           mod 2C,
-         --  Then N' + 1 ≡ W - R ≡ N mod 2C, so with lengths bounded
-         --  less than C, exactly N = N' + 1.
-         Lemma_Mod_Sum_Simp (-R - 1, W, 2*C);
-         Lemma_Mod_Trans_Compat (Np, W - R - 1, 1, 2*C);
-         Lemma_Mod_Nop (N, 2*C);
-         Lemma_Mod_Nop (Np + 1, 2*C);
-      end Lemma_Pop_Decrements_Length;
-
       procedure Lemma_Pop_Shifts_Back_Elements (R, Rp, W, C, I : Big_Integer)
         with Ghost,
              Pre => (0 <= R and then R < 2 * C) and then (0 <= W and then W < 2 * C)
@@ -209,7 +170,7 @@ package body Ring_Buffer with SPARK_Mode => On is
              Post => (Rp + I - 1) mod C = (R + I) mod C
       is
       begin
-         Lemma_Mod_Sum_Simp (I - 1, R + 1, 2 * C);
+         Lemma_Mod_Add_Simp (I - 1, R + 1, 2 * C);
          Lemma_Mod_Composite (R + I, (R + 1) mod (2*C) + I - 1, 2, C);
       end Lemma_Pop_Shifts_Back_Elements;
 
@@ -228,7 +189,7 @@ package body Ring_Buffer with SPARK_Mode => On is
       NewB.Read := (B.Read + 1) mod (2 * B.Capacity);
 
       --  Proof that the length decrements:
-      Lemma_Pop_Decrements_Length (R, W, C, N, Np);
+      Lemma_Pop_Decreases_Length (R, W, C, N, Np, 1);
 
       --  Proof that the new buffer is valid:
       pragma Assert (Is_Valid (NewB));
