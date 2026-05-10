@@ -202,6 +202,17 @@ package body Ring_Buffer with SPARK_Mode => On is
          Lemma_Mod_Nop (Np + 1, 2*C);
       end Lemma_Pop_Decrements_Length;
 
+      procedure Lemma_Pop_Shifts_Back_Elements (R, Rp, W, C, I : Big_Integer)
+        with Ghost,
+             Pre => (0 <= R and then R < 2 * C) and then (0 <= W and then W < 2 * C)
+                     and then Rp = (R + 1) mod (2*C),
+             Post => (Rp + I - 1) mod C = (R + I) mod C
+      is
+      begin
+         Lemma_Mod_Sum_Simp (I - 1, R + 1, 2 * C);
+         Lemma_Mod_Composite (R + I, (R + 1) mod (2*C) + I - 1, 2, C);
+      end Lemma_Pop_Shifts_Back_Elements;
+
       R : constant Big_Integer := To_Big_Integer (B.Read);
       W : constant Big_Integer := To_Big_Integer (B.Write);
       C : constant Big_Integer := To_Big_Integer (B.Capacity);
@@ -224,12 +235,9 @@ package body Ring_Buffer with SPARK_Mode => On is
       B := NewB;
 
       --  Proof that pop leaves back elements unchanged:
+      pragma Assert (Length (B) <= Length (OldB));
       for I in 1 .. Length (B) loop
-         Lemma_Mod_Sum_Simp (To_Big_Integer (I) - 1, R + 1, 2 * C);
-         pragma Assert ((R + To_Big_Integer (I)) mod (2*C) = ((R + 1) mod (2*C) + (To_Big_Integer (I) - 1)) mod (2*C));
-         Lemma_Mod_Composite (R + To_Big_Integer (I), (R + 1) mod (2*C) + To_Big_Integer (I) - 1, 2, C);
-         pragma Assert (((R + 1) mod (2*C) + (To_Big_Integer (I) - 1)) mod C = (R + To_Big_Integer (I)) mod C);
-         pragma Assert (Mask (B, B.Read + (I - 1)) = Mask (OldB, OldB.Read + I));
+         Lemma_Pop_Shifts_Back_Elements (R, To_Big_Integer (B.Read), W, C, To_Big_Integer (I));
          pragma Assert (Get (B, I - 1) = Get (OldB, I));
 
          --  Induct on it.
