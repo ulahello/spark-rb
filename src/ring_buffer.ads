@@ -90,7 +90,7 @@ is
    procedure Truncate_Back (B : in out Valid_Buffer; To_Length : Natural)
      with Post => Length (B) = Natural'Min (To_Length, Length (B'Old))
                   and then (for all I in 0 .. Length (B)
-                             => Get (B'Old, I + (Length (B) - Length (B'Old)))
+                             => Get (B'Old, I + (Length (B'Old) - Length (B)))
                                 = Get (B, I));
 
 end Ring_Buffer;

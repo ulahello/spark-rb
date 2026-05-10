@@ -213,9 +213,39 @@ package body Ring_Buffer with SPARK_Mode => On is
    end Clear;
 
    procedure Truncate_Back (B : in out Valid_Buffer; To_Length : Natural) is
+      R : constant Big_Integer := To_Big_Integer (B.Read);
+      W : constant Big_Integer := To_Big_Integer (B.Write);
+      C : constant Big_Integer := To_Big_Integer (B.Capacity);
+      N : constant Big_Integer := To_Big_Integer (Length (B));
+      L : constant Big_Integer := To_Big_Integer (To_Length);
+      Np : constant Big_Integer := (W - (W - L) mod (2*C)) mod (2*C);
+      dR : constant Big_Integer := W - L - R;
+      OldN : constant Natural := Length (B);
    begin
       if To_Length < Length (B) then
-         B.Read := (B.Write - To_Length) mod B.Capacity;
+         B.Read := (B.Write - To_Length) mod (2 * B.Capacity);
+
+         --  TODO: prove these preconditions
+         pragma Assert (0 <= N - dR);
+         pragma Assert (N - dR <= C);
+
+         --  Proof that the new length is L:
+         Lemma_Pop_Decreases_Length (R, W, C, N, Np, dR);
+         pragma Assert (N = Np + dR);
+         pragma Assert (Np = N - dR);
+         pragma Assert (Np = N - (W - L - R));
+         pragma Assert (Np = (W - R) mod (2*C) - W + L + R);
+         pragma Assert (Np mod (2*C) = ((W - R) mod (2*C) - W + L + R) mod (2*C));
+         Lemma_Mod_Add_Simp (-W + L + R, W - R, 2*C);
+         pragma Assert (Np mod (2*C) = (W - R - W + L + R) mod (2*C));
+         pragma Assert (Np mod (2*C) = L mod (2*C));
+         Lemma_Mod_Nop (L, 2*C);
+         Lemma_Mod_Nop (Np, 2*C);
+         pragma Assert (Np = L);
+
+         pragma Assert (Length (B) = Natural'Min (To_Length, OldN));
+      else
+         pragma Assert (Length (B) = Natural'Min (To_Length, OldN));
       end if;
    end Truncate_Back;
 
