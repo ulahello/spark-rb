@@ -204,9 +204,11 @@ package body Ring_Buffer with SPARK_Mode => On is
       C : constant Big_Integer := To_Big_Integer (B.Capacity);
       N : constant Big_Integer := To_Big_Integer (Length (B));
       L : constant Big_Integer := To_Big_Integer (To_Length);
-      Np : constant Big_Integer := (W - (W - L) mod (2*C)) mod (2*C);
-      dR : constant Big_Integer := W - L - R;
+      Rp : constant Big_Integer := (W - L) mod (2*C);
+      Np : constant Big_Integer := (W - Rp) mod (2*C);
+      dR : constant Big_Integer := N - L;
       OldN : constant Natural := Length (B);
+      OldB : constant Valid_Buffer := B;
       NewB : Buffer := B;
    begin
       if To_Length < Length (B) then
@@ -235,6 +237,17 @@ package body Ring_Buffer with SPARK_Mode => On is
          --  Proof that the new buffer is valid:
          pragma Assert (Is_Valid (NewB));
          B := NewB;
+
+         --  Proof that truncate leaves back elements unchanged:
+         for I in 0 .. Length (B) - 1 loop
+            Lemma_Pop_Shifts_Back_Elements (R, Rp, W, C, To_Big_Integer (I), N - Np);
+            pragma Assert (Mask (B, OldB.Read + (I + (Length (OldB) - Length (B)))) = Mask (B, B.Read + I));
+            pragma Assert (Get (OldB, I + (Length (OldB) - Length (B))) = Get (B, I));
+            pragma Loop_Invariant (for all K in 0 .. I => Get (OldB, K + (Length (OldB) - Length (B))) = Get (B, K));
+         end loop;
+         pragma Assert ((for all I in 0 .. Length (B) - 1
+                             => Get (OldB, I + (Length (OldB) - Length (B)))
+                                = Get (B, I)));
       else
          pragma Assert (Length (B) = Natural'Min (To_Length, OldN));
       end if;
