@@ -75,4 +75,10 @@ package body Lemmas with SPARK_Mode => On is
       Lemma_Push_Increases_Length (-W, -R, C, N, Np, -dR);
    end Lemma_Pop_Decreases_Length;
 
+   procedure Lemma_Pop_Shifts_Back_Elements (R, Rp, W, C, I, dR : Big_Integer) is
+   begin
+      Lemma_Mod_Trans_Compat (Rp, R + dR, I, 2*C);
+      Lemma_Mod_Composite (Rp + I, R + dR + I, 2, C);
+   end Lemma_Pop_Shifts_Back_Elements;
+
 end Lemmas;

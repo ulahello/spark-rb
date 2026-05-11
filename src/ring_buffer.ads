@@ -80,8 +80,8 @@ is
    procedure Pop (B : in out Valid_Buffer; V : out Element)
      with Pre => not Is_Empty (B),
           Post => Length (B) + 1 = Length (B'Old)
-                  and then (for all I in 1 .. Length (B)
-                             => Get (B'Old, I) = Get (B, I - 1))
+                  and then (for all I in 0 .. Length (B) - 1
+                             => Get (B, I) = Get (B'Old, I + 1))
                   and then Get (B'Old, 0) = V;
 
    procedure Clear (B : in out Valid_Buffer)

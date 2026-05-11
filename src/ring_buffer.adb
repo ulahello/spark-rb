@@ -163,28 +163,15 @@ package body Ring_Buffer with SPARK_Mode => On is
    end Push;
 
    procedure Pop (B : in out Valid_Buffer; V : out Element) is
-      procedure Lemma_Pop_Shifts_Back_Elements (R, Rp, W, C, I : Big_Integer)
-        with Ghost,
-             Pre => (0 <= R and then R < 2 * C) and then (0 <= W and then W < 2 * C)
-                     and then Rp = (R + 1) mod (2*C),
-             Post => (Rp + I - 1) mod C = (R + I) mod C
-      is
-      begin
-         Lemma_Mod_Add_Simp (I - 1, R + 1, 2 * C);
-         Lemma_Mod_Composite (R + I, (R + 1) mod (2*C) + I - 1, 2, C);
-      end Lemma_Pop_Shifts_Back_Elements;
-
       R : constant Big_Integer := To_Big_Integer (B.Read);
       W : constant Big_Integer := To_Big_Integer (B.Write);
       C : constant Big_Integer := To_Big_Integer (B.Capacity);
       N : constant Big_Integer := To_Big_Integer (Length (B));
-      Np : constant Big_Integer := (W - (R + 1) mod (2*C)) mod (2*C);
-      Read : constant Natural := B.Read;
+      Rp : constant Big_Integer := (R + 1) mod (2*C);
+      Np : constant Big_Integer := (W - Rp) mod (2*C);
       OldB : constant Valid_Buffer := B;
       NewB : Buffer := B;
-
    begin
-
       V := B.Memory (Mask (B, B.Read));
       NewB.Read := (B.Read + 1) mod (2 * B.Capacity);
 
@@ -196,15 +183,14 @@ package body Ring_Buffer with SPARK_Mode => On is
       B := NewB;
 
       --  Proof that pop leaves back elements unchanged:
-      pragma Assert (Length (B) <= Length (OldB));
-      for I in 1 .. Length (B) loop
-         Lemma_Pop_Shifts_Back_Elements (R, To_Big_Integer (B.Read), W, C, To_Big_Integer (I));
-         pragma Assert (Get (B, I - 1) = Get (OldB, I));
+      pragma Assert (Length (B) < Length (OldB));
+      for I in 0 .. Length (B) - 1 loop
+         Lemma_Pop_Shifts_Back_Elements (R, Rp, W, C, To_Big_Integer (I), 1);
+         pragma Assert (Get (B, I) = Get (OldB, I + 1));
 
          --  Induct on it.
-         pragma Loop_Invariant ((for all K in 1 .. I => Get (OldB, K) = Get (B, K - 1)));
+         pragma Loop_Invariant ((for all K in 1 .. I => Get (B, K) = Get (OldB, K + 1)));
       end loop;
-
    end Pop;
 
    procedure Clear (B : in out Valid_Buffer) is
