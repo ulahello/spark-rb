@@ -2,7 +2,6 @@ pragma Ada_2022;
 
 with Ada.Numerics.Big_Numbers.Big_Integers;
 use Ada.Numerics.Big_Numbers.Big_Integers;
-use type Ada.Numerics.Big_Numbers.Big_Integers.Big_Integer;
 
 package Lemmas with SPARK_Mode => On is
 
