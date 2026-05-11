@@ -214,24 +214,18 @@ package body Ring_Buffer with SPARK_Mode => On is
       if To_Length < Length (B) then
          NewB.Read := (B.Write - To_Length) mod (2 * B.Capacity);
 
-         --  TODO: prove these preconditions
-         pragma Assert (0 <= N - dR);
-         pragma Assert (N - dR <= C);
-
          --  Proof that the new length is L:
+         --  Must prove that Np = (W - (R + dR) mod 2C) mod 2C to use our lemma.
+         --  It suffices to show that Rp = (R + dR) mod 2C, by our definition for Np.
+         --  We set Rp = W - L mod 2C, so
+         --  Rp ≡ W - L ≡ R + W - R - L  mod 2C
+         --             ≡ R + N - L      mod 2C  (by Lemma_Mod_Add_Simp)
+         --             ≡ R + dR         mod 2C
+         pragma Assert (N - dR <= C);
+         Lemma_Mod_Add_Simp (R - L, W - R, 2*C);
+         pragma Assert (Rp = (R + dR) mod (2*C));
          Lemma_Pop_Decreases_Length (R, W, C, N, Np, dR);
-         pragma Assert (N = Np + dR);
-         pragma Assert (Np = N - dR);
-         pragma Assert (Np = N - (W - L - R));
-         pragma Assert (Np = (W - R) mod (2*C) - W + L + R);
-         pragma Assert (Np mod (2*C) = ((W - R) mod (2*C) - W + L + R) mod (2*C));
-         Lemma_Mod_Add_Simp (-W + L + R, W - R, 2*C);
-         pragma Assert (Np mod (2*C) = (W - R - W + L + R) mod (2*C));
-         pragma Assert (Np mod (2*C) = L mod (2*C));
-         Lemma_Mod_Nop (L, 2*C);
-         Lemma_Mod_Nop (Np, 2*C);
          pragma Assert (Np = L);
-
          pragma Assert (Length (NewB) = Natural'Min (To_Length, OldN));
 
          --  Proof that the new buffer is valid:
@@ -245,11 +239,6 @@ package body Ring_Buffer with SPARK_Mode => On is
             pragma Assert (Get (OldB, I + (Length (OldB) - Length (B))) = Get (B, I));
             pragma Loop_Invariant (for all K in 0 .. I => Get (OldB, K + (Length (OldB) - Length (B))) = Get (B, K));
          end loop;
-         pragma Assert ((for all I in 0 .. Length (B) - 1
-                             => Get (OldB, I + (Length (OldB) - Length (B)))
-                                = Get (B, I)));
-      else
-         pragma Assert (Length (B) = Natural'Min (To_Length, OldN));
       end if;
    end Truncate_Back;
 
