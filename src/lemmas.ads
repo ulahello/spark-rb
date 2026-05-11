@@ -24,8 +24,6 @@ package Lemmas with SPARK_Mode => On is
           Subprogram_Variant => (Decreases => K,
                                  Decreases => N);
 
-   --  TODO: Lemma_Power2_Implies_Exp2
-
    --  Useful properties of modular arithmetic. See
    --  https://en.wikipedia.org/wiki/Modular_arithmetic#Basic_properties.
 
@@ -85,9 +83,9 @@ package Lemmas with SPARK_Mode => On is
                   and then Np = (W - (R + dR) mod (2*C)) mod (2*C),
           Post => N = Np + dR;
 
-   procedure Lemma_Pop_Shifts_Back_Elements (R, Rp, W, C, I, dR : Big_Integer)
+   procedure Lemma_Pop_Shifts_Back_Elements (R, Rp, C, I, dR : Big_Integer)
      with Ghost,
-          Pre => (0 <= R and then R < 2 * C) and then (0 <= W and then W < 2 * C)
+          Pre => (0 <= R and then R < 2 * C)
                   and then Rp = (R + dR) mod (2*C),
           Post => (Rp + I) mod C = (R + I + dR) mod C;
 

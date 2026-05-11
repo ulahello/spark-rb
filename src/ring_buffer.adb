@@ -1,10 +1,7 @@
 pragma Ada_2022;
 
 with Ada.Numerics.Big_Numbers.Big_Integers;
-use Ada.Numerics.Big_Numbers.Big_Integers;
 use type Ada.Numerics.Big_Numbers.Big_Integers.Big_Integer;
-
-with Lemmas;
 
 package body Ring_Buffer with SPARK_Mode => On is
 
@@ -185,7 +182,7 @@ package body Ring_Buffer with SPARK_Mode => On is
       --  Proof that pop leaves back elements unchanged:
       pragma Assert (Length (B) < Length (OldB));
       for I in 0 .. Length (B) - 1 loop
-         Lemma_Pop_Shifts_Back_Elements (R, Rp, W, C, To_Big_Integer (I), 1);
+         Lemma_Pop_Shifts_Back_Elements (R, Rp, C, To_Big_Integer (I), 1);
          pragma Assert (Get (B, I) = Get (OldB, I + 1));
 
          --  Induct on it.
@@ -234,7 +231,7 @@ package body Ring_Buffer with SPARK_Mode => On is
 
          --  Proof that truncate leaves back elements unchanged:
          for I in 0 .. Length (B) - 1 loop
-            Lemma_Pop_Shifts_Back_Elements (R, Rp, W, C, To_Big_Integer (I), N - Np);
+            Lemma_Pop_Shifts_Back_Elements (R, Rp, C, To_Big_Integer (I), N - Np);
             pragma Assert (Mask (B, OldB.Read + (I + (Length (OldB) - Length (B)))) = Mask (B, B.Read + I));
             pragma Assert (Get (OldB, I + (Length (OldB) - Length (B))) = Get (B, I));
             pragma Loop_Invariant (for all K in 0 .. I => Get (OldB, K + (Length (OldB) - Length (B))) = Get (B, K));

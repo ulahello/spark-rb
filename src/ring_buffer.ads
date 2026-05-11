@@ -2,7 +2,6 @@ pragma Ada_2022;
 
 with Ada.Numerics.Big_Numbers.Big_Integers;
 use Ada.Numerics.Big_Numbers.Big_Integers;
-use type Ada.Numerics.Big_Numbers.Big_Integers.Big_Integer;
 
 with Lemmas; use Lemmas;
 
@@ -48,7 +47,7 @@ is
                   and then Is_Empty (Buffer_Init'Result);
 
    function Mask (B : Valid_Buffer; I : Natural) return Positive
-     with Post => Mask'Result <= B.Capacity and Mask'Result = 1 + I mod B.Capacity;
+     with Post => Mask'Result <= B.Capacity and then Mask'Result = 1 + I mod B.Capacity;
 
    --  NOTE: The buffer need not be valid, so the length might exceed
    --  the capacity. But if it is, the length is further constrained
