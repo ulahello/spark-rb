@@ -221,9 +221,10 @@ package body Ring_Buffer with SPARK_Mode => On is
       Np : constant Big_Integer := (W - (W - L) mod (2*C)) mod (2*C);
       dR : constant Big_Integer := W - L - R;
       OldN : constant Natural := Length (B);
+      NewB : Buffer := B;
    begin
       if To_Length < Length (B) then
-         B.Read := (B.Write - To_Length) mod (2 * B.Capacity);
+         NewB.Read := (B.Write - To_Length) mod (2 * B.Capacity);
 
          --  TODO: prove these preconditions
          pragma Assert (0 <= N - dR);
@@ -243,7 +244,11 @@ package body Ring_Buffer with SPARK_Mode => On is
          Lemma_Mod_Nop (Np, 2*C);
          pragma Assert (Np = L);
 
-         pragma Assert (Length (B) = Natural'Min (To_Length, OldN));
+         pragma Assert (Length (NewB) = Natural'Min (To_Length, OldN));
+
+         --  Proof that the new buffer is valid:
+         pragma Assert (Is_Valid (NewB));
+         B := NewB;
       else
          pragma Assert (Length (B) = Natural'Min (To_Length, OldN));
       end if;
