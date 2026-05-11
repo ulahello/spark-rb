@@ -17,6 +17,6 @@ $ cat obj/development/gnatprove/gnatprove.out
 
 ## TODOs
 - [ ] Prove all arithmetic lemmas
-- [ ] Finish implementing ring buffer
-- [ ] Fully specify ring buffer code
-- [ ] Prove ring buffer specification
+- [X] Finish implementing ring buffer
+- [X] Fully specify ring buffer code
+- [X] Prove ring buffer specification
