@@ -67,7 +67,7 @@ is
    with Post => Is_Full'Result = (Length (B) = B.Capacity);
 
    function Get (B : Valid_Buffer; I : Natural) return Element
-   with Pre => I <= Length (B),
+   with Pre => I < Length (B),
         Post => Get'Result = B.Memory (Mask (B, B.Read + I));
 
    procedure Push (B : in out Valid_Buffer; V : Element)
@@ -89,7 +89,7 @@ is
 
    procedure Truncate_Back (B : in out Valid_Buffer; To_Length : Natural)
      with Post => Length (B) = Natural'Min (To_Length, Length (B'Old))
-                  and then (for all I in 0 .. Length (B)
+                  and then (for all I in 0 .. Length (B) - 1
                              => Get (B'Old, I + (Length (B'Old) - Length (B)))
                                 = Get (B, I));
 
