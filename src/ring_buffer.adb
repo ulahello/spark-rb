@@ -99,7 +99,6 @@ package body Ring_Buffer with SPARK_Mode => On is
          --  that Mask returns (R + index), so the element at the masked
          --  index R + N is exactly V.
          Lemma_Mod_Trans_Compat (N, W - R, R, 2*C);
-         --  pragma Assert (W mod (2*C) = (R + N) mod (2*C));
          Lemma_Mod_Composite (W, R + N, 2, C);
          pragma Assert (W mod C = (R + N) mod C);
       end Lemma_Pushed_Element_At_Back;
