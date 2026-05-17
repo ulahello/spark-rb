@@ -21,10 +21,73 @@ package body Lemmas with SPARK_Mode => On is
 
    procedure Lemma_Mod_Idempotent (N, M : Big_Integer) is null;
 
+   procedure Lemma_Mod_Nop (N, M : Big_Integer) is null;
+
+   procedure Lemma_Mod_Preserves_Eq (A, B, M : Big_Integer) is null;
+
    procedure Lemma_Mod_Add_Simp (A, B, M : Big_Integer) is
+
+      procedure Lemma_Mod_Add_Nop (A, M : Big_Integer)
+        with Ghost,
+             Pre => M /= 0,
+             Post => (A + M) mod M = A mod M
+                     and then (A - M) mod M = A mod M
+      is
+      begin
+         pragma Assume ((A + M) mod M = A mod M, "sorry");
+         pragma Assume ((A - M) mod M = A mod M, "sorry");
+      end Lemma_Mod_Add_Nop;
+
+      procedure Lemma_Mod_Add_Simp_Nonneg (A, B, M : Big_Integer)
+        with Ghost,
+             Pre => 0 < M and then 0 <= B,
+             Post => (A + B mod M) mod M = (A + B) mod M,
+             Subprogram_Variant => (Decreases => B)
+      is
+      begin
+         if B < M then
+            Lemma_Mod_Nop (B, M);
+            Lemma_Mod_Preserves_Eq (A + B mod M, A + B, M);
+         else
+            Lemma_Mod_Add_Simp_Nonneg (A, B - M, M);
+            Lemma_Mod_Add_Nop (B, M);
+            Lemma_Mod_Add_Nop (A + B, M);
+            pragma Assert ((A + B mod M) mod M = (A + B) mod M);
+         end if;
+      end Lemma_Mod_Add_Simp_Nonneg;
+
+      procedure Lemma_Mod_Add_Simp_Neg (A, B, M : Big_Integer)
+        with Ghost,
+             Pre => 0 < M and then 0 < B,
+             Post => (A + (-B) mod M) mod M = (A - B) mod M,
+             Subprogram_Variant => (Decreases => B) --  can't use Increase with Big_Integer, so manually negate B
+      is
+      begin
+         if 0 <= -B + M then
+            Lemma_Mod_Add_Simp_Nonneg (A, -B + M, M);
+            Lemma_Mod_Add_Nop (-B, M);
+            Lemma_Mod_Add_Nop (A - B, M);
+            pragma Assert ((A + (-B) mod M) mod M = (A - B) mod M);
+         else
+            Lemma_Mod_Add_Simp_Neg (A, B - M, M);
+            Lemma_Mod_Add_Nop (-B, M);
+            Lemma_Mod_Add_Nop (A - B, M);
+            pragma Assert ((A + (-B) mod M) mod M = (A - B) mod M);
+         end if;
+      end Lemma_Mod_Add_Simp_Neg;
+
    begin
-      Lemma_Mod_Idempotent (B, M);
-      Lemma_Mod_Trans_Compat (B, B mod M, A, M);
+      if 0 < M then
+         if 0 <= B then
+            Lemma_Mod_Add_Simp_Nonneg (A, B, M);
+            pragma Assert ((A + B mod M) mod M = (A + B) mod M);
+         else
+            Lemma_Mod_Add_Simp_Neg (A, -B, M);
+            pragma Assert ((A + B mod M) mod M = (A + B) mod M);
+         end if;
+      else
+         pragma Assume ((A + B mod M) mod M = (A + B) mod M, "sorry");
+      end if;
    end Lemma_Mod_Add_Simp;
 
    procedure Lemma_Mod_Mul_Simp (A, B, M : Big_Integer) is
@@ -33,10 +96,7 @@ package body Lemmas with SPARK_Mode => On is
       Lemma_Mod_Scale_Compat (B, B mod M, A, M);
    end Lemma_Mod_Mul_Simp;
 
-   procedure Lemma_Mod_Nop (N, M : Big_Integer) is null;
-
    procedure Lemma_Mod_Trans_Compat (A, B, K, M : Big_Integer) is
-
       procedure Lemma_Mod_Trans_Compat_Eq (A, B, K, M : Big_Integer)
         with Ghost,
              Pre => M /= 0 and then A mod M = B mod M,

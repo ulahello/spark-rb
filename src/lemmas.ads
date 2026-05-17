@@ -31,6 +31,16 @@ package Lemmas with SPARK_Mode => On is
           Pre => M /= 0,
           Post => (N mod M) = (N mod M) mod M;
 
+   procedure Lemma_Mod_Nop (N, M : Big_Integer)
+     with Ghost,
+          Pre => 0 <= N and then N < M,
+          Post => (N mod M) = N;
+
+   procedure Lemma_Mod_Preserves_Eq (A, B, M : Big_Integer)
+     with Ghost,
+          Pre => M /= 0 and then A = B,
+          Post => A mod M = B mod M;
+
    procedure Lemma_Mod_Add_Simp (A, B, M : Big_Integer)
      with Ghost,
           Pre => M /= 0,
@@ -40,11 +50,6 @@ package Lemmas with SPARK_Mode => On is
      with Ghost,
           Pre => M /= 0,
           Post => (A * (B mod M)) mod M = (A * B) mod M;
-
-   procedure Lemma_Mod_Nop (N, M : Big_Integer)
-     with Ghost,
-          Pre => 0 <= N and then N < M,
-          Post => (N mod M) = N;
 
    procedure Lemma_Mod_Trans_Compat (A, B, K, M : Big_Integer)
      with Ghost,
