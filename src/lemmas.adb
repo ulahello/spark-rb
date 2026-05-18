@@ -114,12 +114,10 @@ package body Lemmas with SPARK_Mode => On is
              Pre => M /= 0 and then A mod M = B mod M,
              Post => (A + K) mod M = (B + K) mod M
       is
+         L : constant Big_Integer := (A - B) / M;
       begin
-         pragma Assert (K + (A mod M) = K + (B mod M));
-         pragma Assert ((K + (A mod M)) mod M = (K + (B mod M)) mod M);
-         Lemma_Mod_Add_Simp (K, A, M);
-         Lemma_Mod_Add_Simp (K, B, M);
-         pragma Assert ((A + K) mod M = (B + K) mod M);
+         Lemma_Mod_Def_Converse (A, B, M, L);
+         Lemma_Mod_Def (A + K, B + K, M, L);
       end Lemma_Mod_Trans_Compat_Eq;
 
       procedure Lemma_Mod_Bounded_Add_Can_Break_Eq (A, K, M : Big_Integer)
