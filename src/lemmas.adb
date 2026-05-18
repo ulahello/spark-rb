@@ -25,6 +25,12 @@ package body Lemmas with SPARK_Mode => On is
       pragma Assume (A mod M = B mod M, "sorry");
    end Lemma_Mod_Def;
 
+   procedure Lemma_Mod_Def_Converse (A, B, M, K : Big_Integer)
+   is
+   begin
+      pragma Assume (A = B + K*M, "sorry");
+   end Lemma_Mod_Def_Converse;
+
    procedure Lemma_Mod_Idempotent (N, M : Big_Integer) is null;
 
    procedure Lemma_Mod_Nop (N, M : Big_Integer) is null;
@@ -203,8 +209,16 @@ package body Lemmas with SPARK_Mode => On is
    end Lemma_Mod_Scale_Compat;
 
    procedure Lemma_Mod_Composite (A, B, M, N : Big_Integer) is
+      K : constant Big_Integer := (A - B) / (M * N);
    begin
-      pragma Assume ((A mod M = B mod M) and then (A mod N = B mod N), "sorry");
+      Lemma_Mod_Def_Converse (A, B, M*N, K);
+
+      --  Using the definition of mod, once we've found a K such that
+      --  A = B + MNK, we can reassociate MNK and trivially prove the
+      --  postcondition.
+      pragma Assert (A = B + M*N*K);
+      Lemma_Mod_Def (A, B, M, N*K);
+      Lemma_Mod_Def (A, B, N, M*K);
    end Lemma_Mod_Composite;
 
    procedure Lemma_Push_Increases_Length (R, W, C, N, Np, dW : Big_Integer) is

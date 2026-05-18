@@ -33,6 +33,13 @@ package Lemmas with SPARK_Mode => On is
           Pre => M /= 0 and then A = B + K*M,
           Post => A mod M = B mod M;
 
+   procedure Lemma_Mod_Def_Converse (A, B, M, K : Big_Integer)
+     with Ghost,
+          Pre => M /= 0
+                 and then A mod M = B mod M
+                 and then K = (A - B) / M,
+          Post => A = B + K*M;
+
    procedure Lemma_Mod_Idempotent (N, M : Big_Integer)
      with Ghost,
           Pre => M /= 0,
