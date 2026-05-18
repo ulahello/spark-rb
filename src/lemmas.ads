@@ -26,6 +26,13 @@ package Lemmas with SPARK_Mode => On is
    --  Useful properties of modular arithmetic. See
    --  https://en.wikipedia.org/wiki/Modular_arithmetic#Basic_properties.
 
+   --  It's a little hard to express existence in SPARK but this
+   --  direction for mod's definition is okay.
+   procedure Lemma_Mod_Def (A, B, M, K : Big_Integer)
+     with Ghost,
+          Pre => M /= 0 and then A = B + K*M,
+          Post => A mod M = B mod M;
+
    procedure Lemma_Mod_Idempotent (N, M : Big_Integer)
      with Ghost,
           Pre => M /= 0,

@@ -19,6 +19,12 @@ package body Lemmas with SPARK_Mode => On is
       pragma Assert (N / 2 = 2 ** (K - 1));
    end Lemma_Exp2_Implies_Power2;
 
+   procedure Lemma_Mod_Def (A, B, M, K : Big_Integer)
+   is
+   begin
+      pragma Assume (A mod M = B mod M, "sorry");
+   end Lemma_Mod_Def;
+
    procedure Lemma_Mod_Idempotent (N, M : Big_Integer) is null;
 
    procedure Lemma_Mod_Nop (N, M : Big_Integer) is null;
@@ -34,8 +40,8 @@ package body Lemmas with SPARK_Mode => On is
                      and then (A - M) mod M = A mod M
       is
       begin
-         pragma Assume ((A + M) mod M = A mod M, "sorry");
-         pragma Assume ((A - M) mod M = A mod M, "sorry");
+         Lemma_Mod_Def (A, A + M, M, -1);
+         Lemma_Mod_Def (A, A - M, M, 1);
       end Lemma_Mod_Add_Nop;
 
       procedure Lemma_Mod_Add_Simp_Nonneg (A, B, M : Big_Integer)
