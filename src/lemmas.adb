@@ -204,8 +204,10 @@ package body Lemmas with SPARK_Mode => On is
    end Lemma_Mod_Trans_Compat;
 
    procedure Lemma_Mod_Scale_Compat (A, B, K, M : Big_Integer) is
+      L : constant Big_Integer := (A - B) / M;
    begin
-      pragma Assume ((A * K) mod M = (B * K) mod M, "sorry");
+      Lemma_Mod_Def_Converse (A, B, M, L);
+      Lemma_Mod_Def (K*A, K*B, M, K*L);
    end Lemma_Mod_Scale_Compat;
 
    procedure Lemma_Mod_Composite (A, B, M, N : Big_Integer) is
