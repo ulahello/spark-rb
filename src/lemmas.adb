@@ -31,6 +31,18 @@ package body Lemmas with SPARK_Mode => On is
       pragma Assume (A = B + K*M, "sorry");
    end Lemma_Mod_Def_Converse;
 
+   procedure Lemma_Mod_Def_Neq (A, B, M, K : Big_Integer)
+   is
+   begin
+      pragma Assume (A mod M /= B mod M, "sorry");
+   end Lemma_Mod_Def_Neq;
+
+   procedure Lemma_Mod_Def_Neq_Converse (A, B, M, K : Big_Integer)
+   is
+   begin
+      pragma Assume (A /= B + K*M, "sorry");
+   end Lemma_Mod_Def_Neq_Converse;
+
    procedure Lemma_Mod_Idempotent (N, M : Big_Integer) is null;
 
    procedure Lemma_Mod_Nop (N, M : Big_Integer) is null;
@@ -51,94 +63,15 @@ package body Lemmas with SPARK_Mode => On is
    end Lemma_Mod_Mul_Simp;
 
    procedure Lemma_Mod_Trans_Compat (A, B, K, M : Big_Integer) is
-      procedure Lemma_Mod_Trans_Compat_Eq (A, B, K, M : Big_Integer)
-        with Ghost,
-             Pre => M /= 0 and then A mod M = B mod M,
-             Post => (A + K) mod M = (B + K) mod M
-      is
-         L : constant Big_Integer := (A - B) / M;
-      begin
-         Lemma_Mod_Def_Converse (A, B, M, L);
-         Lemma_Mod_Def (A + K, B + K, M, L);
-      end Lemma_Mod_Trans_Compat_Eq;
-
-      procedure Lemma_Mod_Bounded_Add_Can_Break_Eq (A, K, M : Big_Integer)
-        with Ghost,
-             Pre => M /= 0 and then 0 < K and then K < M, --  TODO: implies M positive
-             Post => (A mod M /= (A + K) mod M)
-      is
-      begin
-         pragma Assert (0 < M);
-         pragma Assume (A mod M /= (A + K) mod M, "sorry");
-      end Lemma_Mod_Bounded_Add_Can_Break_Eq;
-
-      procedure Lemma_Mod_Trans_Can_Break_Eq (A, B, K, M : Big_Integer)
-        with Ghost,
-             Pre => M /= 0 and then A mod M = B mod M,
-             Post => (if K mod M = 0 then A mod M = (B + K) mod M
-                                     else A mod M /= (B + K) mod M)
-      is
-      begin
-         if K mod M = 0 then
-            Lemma_Mod_Add_Simp (B, K, M);
-            pragma Assert ((B + K) mod M = B mod M);
-            pragma Assert (A mod M = (B + K) mod M);
-         else
-            pragma Assert (K /= 0);
-            Lemma_Mod_Add_Simp (B, K, M);
-            Lemma_Mod_Add_Simp (K, B, M);
-            pragma Assert ((B + K) mod M = (B + K mod M) mod M);
-            pragma Assert (B + K /= B);
-            pragma Assert (B mod M + K /= B mod M);
-            if 0 < M then
-               pragma Assert (0 < K mod M and then K mod M < M);
-               Lemma_Mod_Bounded_Add_Can_Break_Eq (B, K mod M, M);
-               pragma Assert ((B + K) mod M /= B mod M);
-               pragma Assert (A mod M /= (B + K) mod M);
-            else
-               pragma Assert (A mod M /= (B + K) mod M);
-            end if;
-         end if;
-      end Lemma_Mod_Trans_Can_Break_Eq;
-
-      procedure Lemma_Mod_Trans_Compat_Neq (A, B, K, M : Big_Integer)
-        with Ghost,
-             Pre => M /= 0 and then A mod M /= B mod M,
-             Post => (A + K) mod M /= (B + K) mod M
-      is
-         Ap : constant Big_Integer := A mod M;
-         Bp : constant Big_Integer := B mod M;
-         D : constant Big_Integer := Bp - Ap;
-      begin
-         pragma Assert (D /= 0);
-         pragma Assert (Ap + D = Bp);
-         pragma Assert (K + Ap + D = K + Bp);
-         pragma Assert ((K + Ap + D) mod M = (K + Bp) mod M);
-         Lemma_Mod_Add_Simp (K + D, A, M);
-         pragma Assert ((K + D + A mod M) mod M = (K + D + A) mod M);
-         pragma Assert ((K + D + Ap) mod M = (K + D + A mod M) mod M);
-         pragma Assert ((K + D + Ap) mod M = (K + D + A) mod M);
-         Lemma_Mod_Add_Simp (K, B, M);
-         pragma Assert ((K + B mod M) mod M = (K + B) mod M);
-         pragma Assert ((K + Bp) mod M = (K + B mod M) mod M);
-         pragma Assert ((K + Bp) mod M = (K + B) mod M);
-         pragma Assert ((K + A + D) mod M = (K + B) mod M);
-
-         pragma Assert (D mod M /= 0);
-         pragma Assert ((-D) mod M /= 0);
-
-         Lemma_Mod_Trans_Can_Break_Eq (K + B, K + A + D, -D, M);
-         pragma Assert ((K + B) mod M /= ((K + A + D) + (-D)) mod M);
-
-         pragma Assert ((A + K) mod M /= (B + K) mod M);
-      end Lemma_Mod_Trans_Compat_Neq;
-
+      L : constant Big_Integer := (A - B) / M;
    begin
       if A mod M = B mod M then
-         Lemma_Mod_Trans_Compat_Eq (A, B, K, M);
+         Lemma_Mod_Def_Converse (A, B, M, L);
+         Lemma_Mod_Def (A + K, B + K, M, L);
          pragma Assert ((A + K) mod M = (B + K) mod M);
       else
-         Lemma_Mod_Trans_Compat_Neq (A, B, K, M);
+         Lemma_Mod_Def_Neq_Converse (A, B, M, L);
+         Lemma_Mod_Def_Neq (A + K, B + K, M, L);
          pragma Assert ((A + K) mod M /= (B + K) mod M);
       end if;
    end Lemma_Mod_Trans_Compat;
