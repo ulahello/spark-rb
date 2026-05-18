@@ -118,10 +118,11 @@ package body Lemmas with SPARK_Mode => On is
 
       procedure Lemma_Mod_Bounded_Add_Can_Break_Eq (A, K, M : Big_Integer)
         with Ghost,
-             Pre => M /= 0 and then 0 < K and then K < M,
+             Pre => M /= 0 and then 0 < K and then K < M, --  TODO: implies M positive
              Post => (A mod M /= (A + K) mod M)
       is
       begin
+         pragma Assert (0 < M);
          pragma Assume (A mod M /= (A + K) mod M, "sorry");
       end Lemma_Mod_Bounded_Add_Can_Break_Eq;
 
