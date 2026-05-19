@@ -50,10 +50,9 @@ package body Lemmas with SPARK_Mode => On is
    procedure Lemma_Mod_Preserves_Eq (A, B, M : Big_Integer) is null;
 
    procedure Lemma_Mod_Add_Simp (A, B, M : Big_Integer) is
-      K : constant Big_Integer := (B - B mod M) / M;
    begin
-      Lemma_Mod_Def_Converse (B, B mod M, M, K);
-      Lemma_Mod_Def (B + A, B mod M + A, M, K);
+      Lemma_Mod_Idempotent (B, M);
+      Lemma_Mod_Trans_Compat (B, B mod M, A, M);
    end Lemma_Mod_Add_Simp;
 
    procedure Lemma_Mod_Mul_Simp (A, B, M : Big_Integer) is
