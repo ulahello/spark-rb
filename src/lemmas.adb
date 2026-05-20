@@ -25,6 +25,17 @@ package body Lemmas with SPARK_Mode => On is
       pragma Assume (N mod M = N - (N / M) * M, "sorry");
    end Lemma_Mod_Compute;
 
+   procedure Lemma_Mod_Diff_Divisible (A, B, M : Big_Integer)
+   is
+   begin
+      if (A mod M = B mod M) or (A - B) mod M = 0 then
+         Lemma_Mod_Compute (A, M);
+         Lemma_Mod_Compute (B, M);
+         Lemma_Mod_Compute (A - B, M);
+         pragma Assert ((A - B)/M = A/M - B/M);
+      end if;
+   end Lemma_Mod_Diff_Divisible;
+
    procedure Lemma_Mod_Def (A, B, M, K : Big_Integer)
    is
    begin
@@ -48,19 +59,9 @@ package body Lemmas with SPARK_Mode => On is
          pragma Assert (A mod M = B mod M);
       end if;
       if A mod M = B mod M then
-         Lemma_Mod_Compute (A, M);
-         Lemma_Mod_Compute (B, M);
-
-         Lemma_Mod_Compute (A - B, M);
-         pragma Assume ((A - B) mod M = 0, "sorry");
-         pragma Assert (A - B - ((A - B)/M)*M = 0);
-         pragma Assert (A - B = ((A - B)/M)*M);
-         pragma Assert (A/M - B/M = (A - B)/M);
-
-         pragma Assert (K = (A - B)/M);
-         pragma Assert (K = A/M - B/M);
-         pragma Assert (K*M = M * (A/M - B/M));
-         pragma Assert (K*M = (A/M)*M - (B/M)*M);
+         Lemma_Mod_Diff_Divisible (A, B, M);
+         pragma Assert (((A - B)/M)*M = A - B);
+         pragma Assert (K*M = A - B);
          pragma Assert (A = B + K*M);
       end if;
    end Lemma_Mod_Def;

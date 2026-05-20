@@ -31,6 +31,11 @@ package Lemmas with SPARK_Mode => On is
           Pre => M /= 0,
           Post => N mod M = N - (N / M) * M;
 
+   procedure Lemma_Mod_Diff_Divisible (A, B, M : Big_Integer)
+     with Ghost,
+          Pre => M /= 0,
+          Post => (A mod M = B mod M) = ((A - B) mod M = 0);
+
    procedure Lemma_Mod_Def (A, B, M, K : Big_Integer)
      with Ghost,
           Pre => M /= 0 and then K = (A - B)/M,
