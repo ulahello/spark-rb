@@ -19,10 +19,32 @@ package body Lemmas with SPARK_Mode => On is
       pragma Assert (N / 2 = 2 ** (K - 1));
    end Lemma_Exp2_Implies_Power2;
 
+   procedure Lemma_Mod_Compute (N, M : Big_Integer)
+   is
+   begin
+      pragma Assume (N mod M = N - (N / M) * M, "sorry");
+   end Lemma_Mod_Compute;
+
    procedure Lemma_Mod_Def (A, B, M, K : Big_Integer)
    is
    begin
-      pragma Assume (A mod M = B mod M, "sorry");
+      --  Working backwards, we can invoke Lemma_Mod_Compute and prove
+      --  that
+      --                A - ⌊A/M⌋M = B - ⌊B/M⌋M.
+      --  Since A = B + KM, K = ⌊(A - B)/M⌋, and we can rewrite the
+      --  above as
+      --    B + KM - ⌊(B + KM)/M⌋M = B - ⌊B/M⌋M
+      --       B + KM - ⌊B/M + K⌋M = B - ⌊B/M⌋M
+      --      B + KM - ⌊B/M⌋M - KM = B - ⌊B/M⌋M
+      --                B - ⌊B/M⌋M = B - ⌊B/M⌋M,
+      --  Which is true by reflexivity.
+      Lemma_Mod_Compute (A, M);
+      Lemma_Mod_Compute (B, M);
+      pragma Assert (K = (A - B) / M);
+      pragma Assert (A - (A / M) * M = B + K*M - ((B + K*M)/M) * M);
+      pragma Assert (B + K*M - ((B + K*M)/M) * M = B + K*M - (B/M + K) * M);
+      pragma Assert (B + K*M - (B/M + K) * M = B + K*M - (B/M) * M - K*M);
+      pragma Assert (A - (A / M) * M = B - (B / M) * M);
    end Lemma_Mod_Def;
 
    procedure Lemma_Mod_Def_Converse (A, B, M, K : Big_Integer)
@@ -90,7 +112,6 @@ package body Lemmas with SPARK_Mode => On is
       --  Using the definition of mod, once we've found a K such that
       --  A = B + MNK, we can reassociate MNK and trivially prove the
       --  postcondition.
-      pragma Assert (A = B + M*N*K);
       Lemma_Mod_Def (A, B, M, N*K);
       Lemma_Mod_Def (A, B, N, M*K);
    end Lemma_Mod_Composite;

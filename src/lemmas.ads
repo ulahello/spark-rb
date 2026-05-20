@@ -26,6 +26,11 @@ package Lemmas with SPARK_Mode => On is
    --  Useful properties of modular arithmetic. See
    --  https://en.wikipedia.org/wiki/Modular_arithmetic#Basic_properties.
 
+   procedure Lemma_Mod_Compute (N, M : Big_Integer)
+     with Ghost,
+          Pre => M /= 0,
+          Post => N mod M = N - (N / M) * M;
+
    procedure Lemma_Mod_Def (A, B, M, K : Big_Integer)
      with Ghost,
           Pre => M /= 0 and then A = B + K*M,
