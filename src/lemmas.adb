@@ -52,16 +52,11 @@ package body Lemmas with SPARK_Mode => On is
          --  Which is true by reflexivity.
          Lemma_Mod_Compute (A, M);
          Lemma_Mod_Compute (B, M);
-         pragma Assert (A - (A / M) * M = B + K*M - ((B + K*M)/M) * M);
-         pragma Assert (B + K*M - ((B + K*M)/M) * M = B + K*M - (B/M + K) * M);
-         pragma Assert (B + K*M - (B/M + K) * M = B + K*M - (B/M) * M - K*M);
-         pragma Assert (A - (A / M) * M = B - (B / M) * M);
+         pragma Assert (((B + K*M)/M) * M = (B/M + K) * M);
          pragma Assert (A mod M = B mod M);
       end if;
       if A mod M = B mod M then
          Lemma_Mod_Diff_Divisible (A, B, M);
-         pragma Assert (((A - B)/M)*M = A - B);
-         pragma Assert (K*M = A - B);
          pragma Assert (A = B + K*M);
       end if;
    end Lemma_Mod_Def;
