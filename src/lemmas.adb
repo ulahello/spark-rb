@@ -28,42 +28,32 @@ package body Lemmas with SPARK_Mode => On is
    procedure Lemma_Mod_Def (A, B, M, K : Big_Integer)
    is
    begin
-      --  Working backwards, we can invoke Lemma_Mod_Compute and prove
-      --  that
-      --                A - ⌊A/M⌋M = B - ⌊B/M⌋M.
-      --  Since A = B + KM, K = ⌊(A - B)/M⌋, and we can rewrite the
-      --  above as
-      --    B + KM - ⌊(B + KM)/M⌋M = B - ⌊B/M⌋M
-      --       B + KM - ⌊B/M + K⌋M = B - ⌊B/M⌋M
-      --      B + KM - ⌊B/M⌋M - KM = B - ⌊B/M⌋M
-      --                B - ⌊B/M⌋M = B - ⌊B/M⌋M,
-      --  Which is true by reflexivity.
-      Lemma_Mod_Compute (A, M);
-      Lemma_Mod_Compute (B, M);
-      pragma Assert (K = (A - B) / M);
-      pragma Assert (A - (A / M) * M = B + K*M - ((B + K*M)/M) * M);
-      pragma Assert (B + K*M - ((B + K*M)/M) * M = B + K*M - (B/M + K) * M);
-      pragma Assert (B + K*M - (B/M + K) * M = B + K*M - (B/M) * M - K*M);
-      pragma Assert (A - (A / M) * M = B - (B / M) * M);
+      if A = B + K*M then
+         --  Working backwards, we can invoke Lemma_Mod_Compute and prove
+         --  that
+         --                A - ⌊A/M⌋M = B - ⌊B/M⌋M.
+         --  Since A = B + KM, K = ⌊(A - B)/M⌋, and we can rewrite the
+         --  above as
+         --    B + KM - ⌊(B + KM)/M⌋M = B - ⌊B/M⌋M
+         --       B + KM - ⌊B/M + K⌋M = B - ⌊B/M⌋M
+         --      B + KM - ⌊B/M⌋M - KM = B - ⌊B/M⌋M
+         --                B - ⌊B/M⌋M = B - ⌊B/M⌋M,
+         --  Which is true by reflexivity.
+         Lemma_Mod_Compute (A, M);
+         Lemma_Mod_Compute (B, M);
+         pragma Assert (K = (A - B) / M);
+         pragma Assert (A - (A / M) * M = B + K*M - ((B + K*M)/M) * M);
+         pragma Assert (B + K*M - ((B + K*M)/M) * M = B + K*M - (B/M + K) * M);
+         pragma Assert (B + K*M - (B/M + K) * M = B + K*M - (B/M) * M - K*M);
+         pragma Assert (A - (A / M) * M = B - (B / M) * M);
+         pragma Assert (A mod M = B mod M);
+      end if;
+      if A mod M = B mod M then
+         pragma Assume (A = B + K*M, "sorry");
+      end if;
    end Lemma_Mod_Def;
 
-   procedure Lemma_Mod_Def_Converse (A, B, M, K : Big_Integer)
-   is
-   begin
-      pragma Assume (A = B + K*M, "sorry");
-   end Lemma_Mod_Def_Converse;
-
-   procedure Lemma_Mod_Def_Neq (A, B, M, K : Big_Integer)
-   is
-   begin
-      pragma Assume (A mod M /= B mod M, "sorry");
-   end Lemma_Mod_Def_Neq;
-
-   procedure Lemma_Mod_Def_Neq_Converse (A, B, M, K : Big_Integer)
-   is
-   begin
-      pragma Assume (A /= B + K*M, "sorry");
-   end Lemma_Mod_Def_Neq_Converse;
+   procedure Lemma_Mod_Def_Helper (A, B, M, K : Big_Integer) is null;
 
    procedure Lemma_Mod_Idempotent (N, M : Big_Integer) is null;
 
@@ -87,12 +77,12 @@ package body Lemmas with SPARK_Mode => On is
       L : constant Big_Integer := (A - B) / M;
    begin
       if A mod M = B mod M then
-         Lemma_Mod_Def_Converse (A, B, M, L);
+         Lemma_Mod_Def (A, B, M, L);
          Lemma_Mod_Def (A + K, B + K, M, L);
          pragma Assert ((A + K) mod M = (B + K) mod M);
       else
-         Lemma_Mod_Def_Neq_Converse (A, B, M, L);
-         Lemma_Mod_Def_Neq (A + K, B + K, M, L);
+         Lemma_Mod_Def (A, B, M, L);
+         Lemma_Mod_Def (A + K, B + K, M, L);
          pragma Assert ((A + K) mod M /= (B + K) mod M);
       end if;
    end Lemma_Mod_Trans_Compat;
@@ -100,18 +90,21 @@ package body Lemmas with SPARK_Mode => On is
    procedure Lemma_Mod_Scale_Compat (A, B, K, M : Big_Integer) is
       L : constant Big_Integer := (A - B) / M;
    begin
-      Lemma_Mod_Def_Converse (A, B, M, L);
+      Lemma_Mod_Def (A, B, M, L);
+      Lemma_Mod_Def_Helper (K*A, K*B, M, K*L);
       Lemma_Mod_Def (K*A, K*B, M, K*L);
    end Lemma_Mod_Scale_Compat;
 
    procedure Lemma_Mod_Composite (A, B, M, N : Big_Integer) is
       K : constant Big_Integer := (A - B) / (M * N);
    begin
-      Lemma_Mod_Def_Converse (A, B, M*N, K);
+      Lemma_Mod_Def (A, B, M*N, K);
 
       --  Using the definition of mod, once we've found a K such that
       --  A = B + MNK, we can reassociate MNK and trivially prove the
       --  postcondition.
+      Lemma_Mod_Def_Helper (A, B, M, N*K);
+      Lemma_Mod_Def_Helper (A, B, N, M*K);
       Lemma_Mod_Def (A, B, M, N*K);
       Lemma_Mod_Def (A, B, N, M*K);
    end Lemma_Mod_Composite;

@@ -33,29 +33,13 @@ package Lemmas with SPARK_Mode => On is
 
    procedure Lemma_Mod_Def (A, B, M, K : Big_Integer)
      with Ghost,
+          Pre => M /= 0 and then K = (A - B)/M,
+          Post => (A mod M = B mod M) = (A = B + K*M);
+
+   procedure Lemma_Mod_Def_Helper (A, B, M, K : Big_Integer)
+     with Ghost,
           Pre => M /= 0 and then A = B + K*M,
-          Post => A mod M = B mod M;
-
-   procedure Lemma_Mod_Def_Converse (A, B, M, K : Big_Integer)
-     with Ghost,
-          Pre => M /= 0
-                 and then A mod M = B mod M
-                 and then K = (A - B) / M,
-          Post => A = B + K*M;
-
-   procedure Lemma_Mod_Def_Neq (A, B, M, K : Big_Integer)
-     with Ghost,
-          Pre => M /= 0
-                 and then K = (A - B) / M
-                 and then A /= B + K*M,
-          Post => A mod M /= B mod M;
-
-   procedure Lemma_Mod_Def_Neq_Converse (A, B, M, K : Big_Integer)
-     with Ghost,
-          Pre => M /= 0
-                 and then K = (A - B) / M
-                 and then A mod M /= B mod M,
-          Post => A /= B + K*M;
+          Post => K = (A - B)/M;
 
    procedure Lemma_Mod_Idempotent (N, M : Big_Integer)
      with Ghost,
