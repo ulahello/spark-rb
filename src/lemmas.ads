@@ -26,10 +26,40 @@ package Lemmas with SPARK_Mode => On is
    --  Useful properties of modular arithmetic. See
    --  https://en.wikipedia.org/wiki/Modular_arithmetic#Basic_properties.
 
+   procedure Lemma_Mod_Negate (N, M: Big_Integer)
+     with Ghost,
+          Pre => M /= 0,
+          Post => (-N) mod (-M) = -(N mod M);
+
+   procedure Lemma_Mod_Diff_Def (A, B, M, K : Big_Integer)
+     with Ghost,
+          Pre => M /= 0 and then K = (A - B) / M,
+          Post => (A = B + K*M) = ((A - B) mod M = 0);
+
+   procedure Lemma_Mod_Diff_Divides (A, B, M : Big_Integer)
+     with Ghost,
+          Pre => M /= 0,
+          Post => (A mod M = B mod M) = ((A - B) mod M = 0);
+
+   procedure Lemma_Mod_Def (A, B, M, K : Big_Integer)
+     with Ghost,
+          Pre => M /= 0 and then K = (A - B)/M,
+          Post => (A mod M = B mod M) = (A = B + K*M);
+
+   procedure Lemma_Mod_Def_Helper (A, B, M, K : Big_Integer)
+     with Ghost,
+          Pre => M /= 0 and then A = B + K*M,
+          Post => K = (A - B)/M;
+
    procedure Lemma_Mod_Idempotent (N, M : Big_Integer)
      with Ghost,
           Pre => M /= 0,
           Post => (N mod M) = (N mod M) mod M;
+
+   procedure Lemma_Mod_Nop (N, M : Big_Integer)
+     with Ghost,
+          Pre => 0 <= N and then N < M,
+          Post => (N mod M) = N;
 
    procedure Lemma_Mod_Add_Simp (A, B, M : Big_Integer)
      with Ghost,
@@ -40,11 +70,6 @@ package Lemmas with SPARK_Mode => On is
      with Ghost,
           Pre => M /= 0,
           Post => (A * (B mod M)) mod M = (A * B) mod M;
-
-   procedure Lemma_Mod_Nop (N, M : Big_Integer)
-     with Ghost,
-          Pre => 0 <= N and then N < M,
-          Post => (N mod M) = N;
 
    procedure Lemma_Mod_Trans_Compat (A, B, K, M : Big_Integer)
      with Ghost,
