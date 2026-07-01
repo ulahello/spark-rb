@@ -11,8 +11,7 @@ $ # Build package
 $ alr build
 
 $ # Run prover
-$ gnatprove --pedantic --counterexamples=on --prover=z3
-$ cat obj/development/gnatprove/gnatprove.out
+$ gnatprove -P spark_rb.gpr --pedantic --prover=z3
 ```
 
 ## TODOs
