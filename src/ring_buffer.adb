@@ -78,9 +78,9 @@ package body Ring_Buffer with SPARK_Mode => On is
    function Is_Full (B : Valid_Buffer) return Boolean
    is (Length (B) = B.Capacity);
 
-   function Get (B : Valid_Buffer; I : Natural) return Element is
+   function Get (B : Valid_Buffer; I : Positive) return Element is
    begin
-      return B.Memory (Mask (B, B.Read + I));
+      return B.Memory (Mask (B, B.Read + (I - 1)));
    end Get;
 
    procedure Push (B : in out Valid_Buffer; V : Element) is
@@ -143,17 +143,17 @@ package body Ring_Buffer with SPARK_Mode => On is
       pragma Assert (Mask (B, Write) = Mask (B, B.Read + (Length (B) - 1)));
 
       --  Proof that all the old elements are unchanged:
-      for I in 0 .. Length (OldB) - 1 loop
+      for I in 1 .. Length (OldB) loop
          --  No index overlaps with where V is.
-         Lemma_Front_Distinct_From_Pushed (R, W, N, C, To_Big_Integer (I));
-         pragma Assert (Mask (B, B.Read + I) /= Mask (B, B.Read + Length (OldB)));
+         Lemma_Front_Distinct_From_Pushed (R, W, N, C, To_Big_Integer (I) - 1);
+         pragma Assert (Mask (B, B.Read + (I - 1)) /= Mask (B, B.Read + Length (OldB)));
 
          --  Read index is unchanged, and we haven't written to this
          --  place, so the elements are unchanged.
          pragma Assert (Get (B, I) = Get (OldB, I));
 
          --  Induct over this.
-         pragma Loop_Invariant ((for all K in 0 .. I => Get (OldB, K) = Get (B, K)));
+         pragma Loop_Invariant ((for all K in 1 .. I => Get (OldB, K) = Get (B, K)));
       end loop;
 
    end Push;
@@ -180,8 +180,8 @@ package body Ring_Buffer with SPARK_Mode => On is
 
       --  Proof that pop leaves back elements unchanged:
       pragma Assert (Length (B) < Length (OldB));
-      for I in 0 .. Length (B) - 1 loop
-         Lemma_Pop_Shifts_Back_Elements (R, Rp, C, To_Big_Integer (I), 1);
+      for I in 1 .. Length (B) loop
+         Lemma_Pop_Shifts_Back_Elements (R, Rp, C, To_Big_Integer (I) - 1, 1);
          pragma Assert (Get (B, I) = Get (OldB, I + 1));
 
          --  Induct on it.
@@ -229,11 +229,11 @@ package body Ring_Buffer with SPARK_Mode => On is
          B := NewB;
 
          --  Proof that truncate leaves back elements unchanged:
-         for I in 0 .. Length (B) - 1 loop
-            Lemma_Pop_Shifts_Back_Elements (R, Rp, C, To_Big_Integer (I), N - Np);
-            pragma Assert (Mask (B, OldB.Read + (I + (Length (OldB) - Length (B)))) = Mask (B, B.Read + I));
+         for I in 1 .. Length (B) loop
+            Lemma_Pop_Shifts_Back_Elements (R, Rp, C, To_Big_Integer (I) - 1, N - Np);
+            pragma Assert (Mask (B, OldB.Read + ((I - 1) + (Length (OldB) - Length (B)))) = Mask (B, B.Read + (I - 1)));
             pragma Assert (Get (OldB, I + (Length (OldB) - Length (B))) = Get (B, I));
-            pragma Loop_Invariant (for all K in 0 .. I => Get (OldB, K + (Length (OldB) - Length (B))) = Get (B, K));
+            pragma Loop_Invariant (for all K in 1 .. I => Get (OldB, K + (Length (OldB) - Length (B))) = Get (B, K));
          end loop;
       end if;
    end Truncate_Back;
