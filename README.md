@@ -1,6 +1,7 @@
 # Ring buffer in SPARK
 
-Note: incomplete, WIP!
+An implementation of a ring buffer in Ada/SPARK, fully proven to match its specification.
+This is done with lots of [modular arithmetic lemmas](./src/lemmas.ads).
 
 ## Quick start
 
@@ -13,9 +14,3 @@ $ alr build
 $ # Run prover
 $ gnatprove -P spark_rb.gpr --pedantic --prover=z3
 ```
-
-## TODOs
-- [X] Implement ring buffer
-- [X] Fully specify ring buffer code
-- [X] Prove ring buffer specification
-- [X] Prove all arithmetic lemmas
