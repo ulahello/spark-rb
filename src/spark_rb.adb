@@ -3,7 +3,7 @@ pragma Ada_2022;
 with Ada.Numerics.Big_Numbers.Big_Integers;
 use type Ada.Numerics.Big_Numbers.Big_Integers.Big_Integer;
 
-package body Ring_Buffer with SPARK_Mode => On is
+package body Spark_Rb with SPARK_Mode => On is
 
    function Is_Valid (B : Buffer) return Boolean
    is (Capacity_Is_Not_Too_Large (B.Capacity)
@@ -238,4 +238,4 @@ package body Ring_Buffer with SPARK_Mode => On is
       end if;
    end Truncate_Back;
 
-end Ring_Buffer;
+end Spark_Rb;
